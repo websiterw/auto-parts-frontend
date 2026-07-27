@@ -1,11 +1,12 @@
-const API_BASE = 'https://auto-parts-backend.onrender.com/api';
+// CHANGE THIS TO YOUR LIVE BACKEND URL
+const API_BASE = 'https://auto-parts-backend-nh82.onrender.com/api';
 
-// Helper to get token
+// ----------------------------------------------
+// Helper: get token from localStorage
 const getToken = () => localStorage.getItem('token');
 
-// ============================================
-// GENERIC API CALLER (with auth)
-// ============================================
+// ----------------------------------------------
+// Generic API caller with auth
 export const apiCall = async (endpoint, options = {}) => {
   const token = getToken();
   const headers = {
@@ -19,9 +20,8 @@ export const apiCall = async (endpoint, options = {}) => {
   return data;
 };
 
-// ============================================
+// ----------------------------------------------
 // AUTH
-// ============================================
 export const register = (accountNumber, password, invitationCode) =>
   apiCall('/auth/register', {
     method: 'POST',
@@ -36,35 +36,29 @@ export const login = (accountNumber, password) =>
 
 export const getMe = () => apiCall('/auth/me');
 
-// ============================================
+// ----------------------------------------------
 // PRODUCTS
-// ============================================
 export const getProducts = () => apiCall('/products');
-
 export const purchaseProduct = (productId) =>
   apiCall('/investments/purchase', {
     method: 'POST',
     body: JSON.stringify({ productId })
   });
 
-// ============================================
-// INVESTMENTS (My products / My income)
-// ============================================
+// ----------------------------------------------
+// INVESTMENTS
 export const getInvestments = () => apiCall('/investments');
 
-// ============================================
+// ----------------------------------------------
 // TEAM
-// ============================================
 export const getTeamData = () => apiCall('/team');
 
-// ============================================
-// TRANSACTIONS (records)
-// ============================================
+// ----------------------------------------------
+// TRANSACTIONS
 export const getTransactions = () => apiCall('/transactions');
 
-// ============================================
+// ----------------------------------------------
 // WITHDRAWALS
-// ============================================
 export const requestWithdrawal = (data) =>
   apiCall('/withdrawals/request', {
     method: 'POST',
@@ -73,9 +67,8 @@ export const requestWithdrawal = (data) =>
 
 export const getWithdrawals = () => apiCall('/withdrawals');
 
-// ============================================
+// ----------------------------------------------
 // RECHARGES
-// ============================================
 export const requestRecharge = (data) =>
   apiCall('/recharges/request', {
     method: 'POST',
@@ -84,30 +77,25 @@ export const requestRecharge = (data) =>
 
 export const getRecharges = () => apiCall('/recharges');
 
-// ============================================
+// ----------------------------------------------
 // CHECK-IN
-// ============================================
 export const checkin = () => apiCall('/checkin', { method: 'POST' });
 
-// ============================================
+// ----------------------------------------------
 // TASKS
-// ============================================
 export const getTasks = () => apiCall('/tasks');
 
-// ============================================
+// ----------------------------------------------
 // GIFT CODES
-// ============================================
 export const redeemGift = (code) =>
   apiCall('/gift/redeem', {
     method: 'POST',
     body: JSON.stringify({ code })
   });
 
-// ============================================
-// TOAST NOTIFICATIONS (auto-hide after 1.5s)
-// ============================================
+// ----------------------------------------------
+// TOAST NOTIFICATIONS
 export function showToast(message, type = 'error') {
-  // Remove any existing toast
   const existing = document.getElementById('global-toast');
   if (existing) existing.remove();
 
@@ -134,10 +122,8 @@ export function showToast(message, type = 'error') {
 
   const icon = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
   toast.innerHTML = `${icon} ${message}`;
-
   document.body.appendChild(toast);
 
-  // Auto-remove after 1.5 seconds
   setTimeout(() => {
     if (toast) {
       toast.style.opacity = '0';
@@ -146,7 +132,6 @@ export function showToast(message, type = 'error') {
     }
   }, 1500);
 
-  // Add animation keyframes if not present
   if (!document.getElementById('toast-styles')) {
     const style = document.createElement('style');
     style.id = 'toast-styles';
@@ -160,7 +145,6 @@ export function showToast(message, type = 'error') {
   }
 }
 
-// Shortcut functions
 export const toastError = (msg) => showToast(msg, 'error');
 export const toastSuccess = (msg) => showToast(msg, 'success');
 export const toastInfo = (msg) => showToast(msg, 'info');

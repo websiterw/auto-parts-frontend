@@ -13,12 +13,12 @@ export async function renderProduct() {
   } catch (e) {
     // fallback dummy
     allProducts = [
-      { _id: 'vip1', name: 'VIP1 Anywheel Bike', price: 6000, termDays: 180, dailyIncome: 1300, totalIncome: 234000, level: 1 },
-      { _id: 'vip2', name: 'VIP2 Anywheel Bike', price: 12000, termDays: 180, dailyIncome: 2800, totalIncome: 504000, level: 2 },
-      { _id: 'vip3', name: 'VIP3 Electric Scooter', price: 24000, termDays: 180, dailyIncome: 6000, totalIncome: 1080000, level: 3 },
-      { _id: 'vip4', name: 'VIP4 Premium E-Bike', price: 48000, termDays: 180, dailyIncome: 12500, totalIncome: 2250000, level: 4 },
-      { _id: 'vip5', name: 'VIP5 Elite E-Bike', price: 96000, termDays: 180, dailyIncome: 25000, totalIncome: 4500000, level: 5 },
-      { _id: 'vip6', name: 'VIP6 Ultimate E-Bike', price: 192000, termDays: 180, dailyIncome: 50000, totalIncome: 9000000, level: 6 }
+      { _id: 'vip1', name: 'Product-1 Auto Parts', price: 6000, termDays: 180, dailyIncome: 1300, totalIncome: 234000, level: 1 },
+      { _id: 'vip2', name: 'Product-2 Auto Parts', price: 12000, termDays: 180, dailyIncome: 2800, totalIncome: 504000, level: 2 },
+      { _id: 'vip3', name: 'Product-3 Auto Parts', price: 24000, termDays: 180, dailyIncome: 6000, totalIncome: 1080000, level: 3 },
+      { _id: 'vip4', name: 'Product-4 Auto Parts', price: 48000, termDays: 180, dailyIncome: 12500, totalIncome: 2250000, level: 4 },
+      { _id: 'vip5', name: 'Product-5 Auto Parts', price: 96000, termDays: 180, dailyIncome: 25000, totalIncome: 4500000, level: 5 },
+      { _id: 'vip6', name: 'Product-6 Auto Parts', price: 192000, termDays: 180, dailyIncome: 50000, totalIncome: 9000000, level: 6 }
     ];
   }
 
