@@ -1,4 +1,4 @@
-import { apiCall } from '../api.js';
+import { apiCall, getPublicSettings } from '../api.js';
 import { toastError, toastSuccess, toastInfo } from '../api.js';
 
 export function renderRecharge() {
@@ -12,24 +12,29 @@ export function renderRecharge() {
   let userAccount = '';
   let pendingId = null;
 
-  // Default bank details (will be overridden by settings)
   let bankDetails = {
-    MTN: { account: '0782789646', name: 'MARIE RWAMASIRABO' },
-    Airtel: { account: '0788123456', name: 'AIRTEL RECEIVER' }
+    MTN: { account: '0792702997', name: 'ARSENE BAYIRINGIRE' },
+    Airtel: { account: '0737217328', name: 'Arsene BAYIRINGIRE' }
   };
 
   async function fetchSettings() {
     try {
-      const res = await apiCall('/managers/settings');
+      const res = await getPublicSettings();
       if (res) {
-        if (res.mtnAccount) bankDetails.MTN.account = res.mtnAccount;
-        if (res.mtnName) bankDetails.MTN.name = res.mtnName;
-        if (res.airtelAccount) bankDetails.Airtel.account = res.airtelAccount;
-        if (res.airtelName) bankDetails.Airtel.name = res.airtelName;
+        bankDetails.MTN.account = res.mtnAccount || bankDetails.MTN.account;
+        bankDetails.MTN.name = res.mtnName || bankDetails.MTN.name;
+        bankDetails.Airtel.account = res.airtelAccount || bankDetails.Airtel.account;
+        bankDetails.Airtel.name = res.airtelName || bankDetails.Airtel.name;
       }
-    } catch (e) {
-      // Use defaults
+    } catch (e) {}
+  }
+
+  async function renderStepWithFreshSettings(stepNumber) {
+    if (stepNumber === 2 || stepNumber === 3) {
+      await fetchSettings();
     }
+    step = stepNumber;
+    renderStep();
   }
 
   function renderStep() {
@@ -38,16 +43,16 @@ export function renderRecharge() {
     if (step === 1) {
       html = `
         <div style="padding: 12px 0 8px;">
-          <div style="position:relative; width:100%; margin-bottom:16px;">
-            <img src="assets/images/recharge-up.png" alt="Recharge" style="width:100%; border-radius:16px; display:block;" onerror="this.style.display='none'">
-            <button id="recharge-back" style="position:absolute; top:12px; left:12px; background:rgba(0,0,0,0.5); border:none; color:#fff; font-size:22px; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+          <!-- Header with Back button and Title -->
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+            <button id="recharge-back" style="background:none; border:none; color:#FF6B00; font-size:24px; cursor:pointer;">
               <i class="fas fa-chevron-left"></i>
             </button>
-            <button id="recharge-history" style="position:absolute; top:12px; right:12px; background:rgba(0,0,0,0.5); border:none; color:#fff; font-size:22px; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;">
-              <i class="fas fa-clock"></i>
-            </button>
-            <div style="position:absolute; bottom:12px; left:50%; transform:translateX(-50%); color:#fff; font-weight:700; font-size:18px; text-shadow:0 2px 8px rgba(0,0,0,0.8);">
-              Recharge
+            <h2 style="font-size:20px; font-weight:700; color:#fff; margin:0;">Recharge</h2>
+            <div style="flex:1; text-align:right;">
+              <button id="recharge-history" style="background:none; border:none; color:#FF6B00; font-size:22px; cursor:pointer;">
+                <i class="fas fa-clock"></i>
+              </button>
             </div>
           </div>
 
@@ -76,11 +81,9 @@ export function renderRecharge() {
             </div>
 
             <button class="btn" id="recharge-next" style="margin-top:8px;">Confirm</button>
-
             <p style="color:#FF6B00; text-align:center; margin-top:12px; font-size:13px; cursor:pointer;" id="recharge-not-credited">
               If your recharge is not credited for a long time, click here
             </p>
-
             <div style="font-size:12px; color:#6a7488; margin-top:12px; line-height:1.6;">
               <p>1. The minimum recharge amount is RWF 6000.</p>
               <p>2. Please use your latest account number for each recharge.</p>
@@ -182,8 +185,7 @@ export function renderRecharge() {
           return;
         }
         selectedAmount = amount;
-        step = 2;
-        renderStep();
+        renderStepWithFreshSettings(2);
       });
       document.getElementById('recharge-back').addEventListener('click', () => window.location.hash = 'home');
       document.getElementById('recharge-history').addEventListener('click', () => window.location.hash = 'rechargeRecords');
@@ -199,48 +201,29 @@ export function renderRecharge() {
         step = 1;
         renderStep();
       });
-
-      // ===== FIXED: Confirm button with proper error handling =====
-      const confirmBtn = document.getElementById('payment-confirm');
-      if (confirmBtn) {
-        confirmBtn.addEventListener('click', async () => {
-          userAccount = document.getElementById('user-account').value.trim();
-          if (!userAccount) {
-            window.toastError('Please enter your payment account number.');
-            return;
-          }
-
-          try {
-            // Show loading state
-            confirmBtn.textContent = 'Submitting...';
-            confirmBtn.disabled = true;
-
-            const data = await apiCall('/recharges/request', {
-              method: 'POST',
-              body: JSON.stringify({
-                amount: selectedAmount,
-                method: selectedMethod,
-                account: userAccount
-              })
-            });
-
-            pendingId = data.pendingId;
-            window.toastSuccess('Recharge request submitted for approval.');
-            step = 3;
-            renderStep();
-          } catch (err) {
-            console.error('Recharge error:', err);
-            window.toastError(err.message || 'Failed to submit recharge. Please try again.');
-            // Re-enable button
-            confirmBtn.textContent = 'Confirm →';
-            confirmBtn.disabled = false;
-          }
-        });
-      }
+      document.getElementById('payment-confirm').addEventListener('click', async () => {
+        userAccount = document.getElementById('user-account').value.trim();
+        if (!userAccount) {
+          window.toastError('Please enter your payment account number.');
+          return;
+        }
+        try {
+          const data = await apiCall('/recharges/request', {
+            method: 'POST',
+            body: JSON.stringify({ amount: selectedAmount, method: selectedMethod, account: userAccount })
+          });
+          pendingId = data.pendingId;
+          window.toastSuccess('Recharge request submitted for approval.');
+          await fetchSettings();
+          step = 3;
+          renderStep();
+        } catch (err) {
+          window.toastError(err.message || 'Failed to submit recharge.');
+        }
+      });
     } else if (step === 3) {
       document.getElementById('step-back').addEventListener('click', () => {
-        step = 2;
-        renderStep();
+        renderStepWithFreshSettings(2);
       });
       document.getElementById('click-to-pay').addEventListener('click', () => {
         const bank = bankDetails[selectedMethod];
@@ -258,8 +241,6 @@ export function renderRecharge() {
     }
   }
 
-  // Initialize
   fetchSettings().then(() => renderStep());
-
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
 }

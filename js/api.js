@@ -1,12 +1,11 @@
-// CHANGE THIS TO YOUR LIVE BACKEND URL
-const API_BASE = 'https://auto-parts-backend-nh82.onrender.com/api';
+const API_BASE = 'https://auto-parts-backend.onrender.com/api'; // Change to production URL when deploying
 
-// ----------------------------------------------
-// Helper: get token from localStorage
+// Helper to get token
 const getToken = () => localStorage.getItem('token');
 
-// ----------------------------------------------
-// Generic API caller with auth
+// ============================================
+// GENERIC API CALLER (with auth)
+// ============================================
 export const apiCall = async (endpoint, options = {}) => {
   const token = getToken();
   const headers = {
@@ -20,8 +19,19 @@ export const apiCall = async (endpoint, options = {}) => {
   return data;
 };
 
-// ----------------------------------------------
+// ============================================
+// PUBLIC SETTINGS (no auth needed)
+// ============================================
+export const getPublicSettings = async () => {
+  const res = await fetch(`${API_BASE}/settings/public`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.msg || 'Failed to fetch settings');
+  return data;
+};
+
+// ============================================
 // AUTH
+// ============================================
 export const register = (accountNumber, password, invitationCode) =>
   apiCall('/auth/register', {
     method: 'POST',
@@ -36,8 +46,9 @@ export const login = (accountNumber, password) =>
 
 export const getMe = () => apiCall('/auth/me');
 
-// ----------------------------------------------
+// ============================================
 // PRODUCTS
+// ============================================
 export const getProducts = () => apiCall('/products');
 export const purchaseProduct = (productId) =>
   apiCall('/investments/purchase', {
@@ -45,20 +56,24 @@ export const purchaseProduct = (productId) =>
     body: JSON.stringify({ productId })
   });
 
-// ----------------------------------------------
+// ============================================
 // INVESTMENTS
+// ============================================
 export const getInvestments = () => apiCall('/investments');
 
-// ----------------------------------------------
-// TEAM
+// ============================================
+// TEAM (GET)
+// ============================================
 export const getTeamData = () => apiCall('/team');
 
-// ----------------------------------------------
+// ============================================
 // TRANSACTIONS
+// ============================================
 export const getTransactions = () => apiCall('/transactions');
 
-// ----------------------------------------------
+// ============================================
 // WITHDRAWALS
+// ============================================
 export const requestWithdrawal = (data) =>
   apiCall('/withdrawals/request', {
     method: 'POST',
@@ -67,8 +82,9 @@ export const requestWithdrawal = (data) =>
 
 export const getWithdrawals = () => apiCall('/withdrawals');
 
-// ----------------------------------------------
+// ============================================
 // RECHARGES
+// ============================================
 export const requestRecharge = (data) =>
   apiCall('/recharges/request', {
     method: 'POST',
@@ -77,24 +93,28 @@ export const requestRecharge = (data) =>
 
 export const getRecharges = () => apiCall('/recharges');
 
-// ----------------------------------------------
+// ============================================
 // CHECK-IN
+// ============================================
 export const checkin = () => apiCall('/checkin', { method: 'POST' });
 
-// ----------------------------------------------
+// ============================================
 // TASKS
+// ============================================
 export const getTasks = () => apiCall('/tasks');
 
-// ----------------------------------------------
+// ============================================
 // GIFT CODES
+// ============================================
 export const redeemGift = (code) =>
   apiCall('/gift/redeem', {
     method: 'POST',
     body: JSON.stringify({ code })
   });
 
-// ----------------------------------------------
+// ============================================
 // TOAST NOTIFICATIONS
+// ============================================
 export function showToast(message, type = 'error') {
   const existing = document.getElementById('global-toast');
   if (existing) existing.remove();
