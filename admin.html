@@ -7,17 +7,186 @@
   <title>Auto parts Admin</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-    /* (your existing CSS – unchanged) */
+    /* ---------- Reset & Base ---------- */
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0e17; color: #fff; display: flex; justify-content: center; min-height: 100vh; padding: 20px; }
-    #app { max-width: 1200px; width: 100%; background: #0f1624; border-radius: 24px; padding: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.8); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0e17;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    #app {
+      max-width: 1200px;
+      width: 100%;
+      background: #0f1624;
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    }
     h1 { color: #FF6B00; font-size: 28px; margin-bottom: 8px; }
     .subtitle { color: #8a94a6; margin-bottom: 24px; }
-    /* ... (keep all existing styles) ... */
+
+    /* ---------- Tabs ---------- */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      border-bottom: 2px solid #1e2838;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      padding: 12px 24px;
+      color: #8a94a6;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: 0.2s;
+    }
+    .tab-btn:hover { color: #fff; }
+    .tab-btn.active {
+      color: #FF6B00;
+      border-bottom-color: #FF6B00;
+    }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* ---------- Cards ---------- */
+    .card {
+      background: #141c2b;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      border: 1px solid #1e2838;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    /* ---------- Inputs ---------- */
+    .input-group { margin-bottom: 14px; }
+    .input-group label { display: block; font-size: 13px; color: #b0baca; margin-bottom: 4px; }
+    .input-group input, .input-group select {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid #2a3040;
+      background: #0a0e17;
+      color: #fff;
+      font-size: 15px;
+    }
+    .input-group input:focus { border-color: #FF6B00; outline: none; }
+
+    /* ---------- Buttons ---------- */
+    .btn {
+      background: #FF6B00;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 30px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+      font-size: 14px;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-sm { padding: 4px 12px; font-size: 12px; }
+    .btn-danger { background: #d32f2f; }
+    .btn-success { background: #2e7d32; }
+    .btn-outline { background: transparent; border: 1px solid #2a3040; color: #b0baca; }
+    .btn-outline:hover { border-color: #FF6B00; color: #fff; }
+
+    /* ---------- Login page ---------- */
+    .login-container {
+      max-width: 400px;
+      margin: 60px auto;
+    }
+    .login-container .card {
+      background: #141c2b;
+      border: 1px solid #1e2838;
+    }
+    .login-container h1 {
+      text-align: center;
+      color: #FF6B00;
+    }
+    .login-container .subtitle {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    /* ---------- Table ---------- */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th { text-align: left; padding: 12px 8px; color: #8a94a6; font-weight: 600; border-bottom: 1px solid #1e2838; }
+    td { padding: 10px 8px; border-bottom: 1px solid #1a2230; vertical-align: middle; }
+    tr:hover td { background: #1a2230; }
+
+    /* ---------- Badges ---------- */
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-success { background: #1e4a2e; color: #4caf50; }
+    .badge-danger { background: #4a1e1e; color: #f44336; }
+    .badge-warning { background: #4a3a1e; color: #ff9800; }
+    .badge-default { background: #2a3040; color: #b0baca; }
+
+    /* ---------- Modal ---------- */
+    .modal-overlay {
+      position: fixed; top:0; left:0; right:0; bottom:0;
+      background: rgba(0,0,0,0.7);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999;
+      animation: fadeIn 0.3s;
+    }
+    .modal {
+      background: #141c2b;
+      border-radius: 20px;
+      padding: 24px;
+      max-width: 500px;
+      width: 92%;
+      max-height: 90vh;
+      overflow-y: auto;
+      border: 1px solid #1e2838;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    }
+    .modal h2 { margin-bottom: 16px; color: #FF6B00; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 600px) {
+      #app { padding: 16px; }
+      .tab-btn { padding: 10px 14px; font-size: 14px; }
+      .card-header { flex-direction: column; align-items: stretch; }
+    }
   </style>
 </head>
 <body>
-<div id="app"></div>
+<div id="app">
+  <!-- Dynamic content -->
+</div>
 <script>
   // ============================================================
   // AUTO-DETECT LOCALHOST vs PRODUCTION
@@ -25,7 +194,7 @@
   const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   const API_BASE = isLocal
     ? 'http://localhost:5000/api'
-    : 'https://auto-parts-backend-nh82.onrender.com/api';   // <-- UPDATED
+    : 'https://auto-parts-backend.onrender.com/api';
 
   let adminToken = localStorage.getItem('adminToken');
 
@@ -84,10 +253,485 @@
     }
   }
 
-  // -------- Main App (all tabs) --------
+  // -------- Main App --------
   function renderApp() {
-    // ... (keep all existing functions: loadUsers, loadTransactions, loadWithdrawals, loadRecharges, loadSettings, etc.)
-    // They are unchanged – they call authFetch which uses the correct API_BASE.
+    const app = document.getElementById('app');
+    app.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+          <h1>Admin Panel</h1>
+          <div class="subtitle">Manage your platform</div>
+        </div>
+        <button class="btn btn-danger" onclick="logout()" style="width:auto;">Logout</button>
+      </div>
+
+      <div class="tabs" id="tab-headers">
+        <button class="tab-btn active" data-tab="users">Users</button>
+        <button class="tab-btn" data-tab="transactions">Transactions</button>
+        <button class="tab-btn" data-tab="withdrawals">Withdrawals</button>
+        <button class="tab-btn" data-tab="recharges">Recharges</button>
+        <button class="tab-btn" data-tab="settings">Settings</button>
+      </div>
+
+      <div id="tab-content">
+        <div class="tab-pane active" id="pane-users">Loading users...</div>
+        <div class="tab-pane" id="pane-transactions">Loading transactions...</div>
+        <div class="tab-pane" id="pane-withdrawals">Loading withdrawals...</div>
+        <div class="tab-pane" id="pane-recharges">Loading recharges...</div>
+        <div class="tab-pane" id="pane-settings">Loading settings...</div>
+      </div>
+    `;
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const tab = btn.dataset.tab;
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        document.getElementById(`pane-${tab}`).classList.add('active');
+        if (tab === 'users') loadUsers();
+        else if (tab === 'transactions') loadTransactions();
+        else if (tab === 'withdrawals') loadWithdrawals();
+        else if (tab === 'recharges') loadRecharges();
+        else if (tab === 'settings') loadSettings();
+      });
+    });
+
+    loadUsers();
+  }
+
+  // -------- Users Tab --------
+  let allUsers = [];
+  let userEditId = null;
+
+  async function loadUsers() {
+    const container = document.getElementById('pane-users');
+    try {
+      const users = await authFetch('/managers/users');
+      allUsers = users;
+      renderUsersTable(users);
+    } catch (err) {
+      container.innerHTML = `<div class="card text-danger">Error loading users: ${err.message}</div>`;
+    }
+  }
+
+  function renderUsersTable(users) {
+    const container = document.getElementById('pane-users');
+    container.innerHTML = `
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">All Users (${users.length})</span>
+          <div class="search-box">
+            <input type="text" id="user-search" placeholder="Search by account..." oninput="filterUsers()">
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Account</th><th>Referral</th><th>Balance</th><th>Level</th><th>Check-in</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+              ${users.map(u => `
+                <tr>
+                  <td><strong>${u.accountNumber}</strong></td>
+                  <td>${u.myReferralCode || '-'}</td>
+                  <td>RWF ${u.balance.toFixed(2)}</td>
+                  <td>LV${u.level || 1}</td>
+                  <td>${u.checkinDays || 0}</td>
+                  <td>
+                    <button class="btn btn-sm btn-outline" onclick="editUser('${u._id}')">Edit</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteUser('${u._id}')">Delete</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  function filterUsers() {
+    const q = document.getElementById('user-search').value.toLowerCase();
+    const filtered = allUsers.filter(u => u.accountNumber.toLowerCase().includes(q));
+    renderUsersTable(filtered);
+  }
+
+  async function editUser(id) {
+    const user = allUsers.find(u => u._id === id);
+    if (!user) return;
+    userEditId = id;
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal">
+        <h2>Edit User</h2>
+        <div class="input-group"><label>Account</label><input id="edit-account" value="${user.accountNumber}" disabled></div>
+        <div class="input-group"><label>Balance</label><input id="edit-balance" type="number" value="${user.balance}" step="0.01"></div>
+        <div class="input-group"><label>Level</label><input id="edit-level" type="number" value="${user.level || 1}" min="1"></div>
+        <div class="input-group"><label>Check-in Days</label><input id="edit-checkin" type="number" value="${user.checkinDays || 0}" min="0"></div>
+        <div class="input-group"><label>New Password (leave blank)</label><input id="edit-password" type="password" placeholder="Enter new password"></div>
+        <div class="modal-actions">
+          <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+          <button class="btn" onclick="saveUserEdit()">Save</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  async function saveUserEdit() {
+    const modal = document.querySelector('.modal-overlay');
+    const balance = parseFloat(document.getElementById('edit-balance').value);
+    const level = parseInt(document.getElementById('edit-level').value);
+    const checkinDays = parseInt(document.getElementById('edit-checkin').value);
+    const password = document.getElementById('edit-password').value;
+    const payload = { balance, level, checkinDays };
+    if (password) payload.password = password;
+    try {
+      await authFetch(`/managers/users/${userEditId}`, { method: 'PUT', body: JSON.stringify(payload) });
+      alert('Updated');
+      modal.remove();
+      loadUsers();
+    } catch (err) { alert(err.message); }
+  }
+
+  async function deleteUser(id) {
+    if (!confirm('Delete?')) return;
+    try {
+      await authFetch(`/managers/users/${id}`, { method: 'DELETE' });
+      alert('Deleted');
+      loadUsers();
+    } catch (err) { alert(err.message); }
+  }
+
+  // -------- Transactions, Withdrawals, Recharges (simple) --------
+  async function loadTransactions() {
+    const container = document.getElementById('pane-transactions');
+    try {
+      const data = await authFetch('/managers/transactions');
+      container.innerHTML = `
+        <div class="card">
+          <div class="card-header"><span class="card-title">Transactions (${data.length})</span></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>User</th><th>Type</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+              <tbody>
+                ${data.slice(0,20).map(tx => `
+                  <tr>
+                    <td>${tx.userId?.accountNumber || 'N/A'}</td>
+                    <td><span class="badge badge-default">${tx.type}</span></td>
+                    <td>${tx.amount >= 0 ? '+' : ''}RWF ${Math.abs(tx.amount).toFixed(2)}</td>
+                    <td><span class="badge ${tx.status === 'success' ? 'badge-success' : 'badge-warning'}">${tx.status || 'success'}</span></td>
+                    <td>${new Date(tx.createdAt).toLocaleString()}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    } catch (err) {
+      container.innerHTML = `<div class="card text-danger">Error: ${err.message}</div>`;
+    }
+  }
+
+  async function loadWithdrawals() {
+    const container = document.getElementById('pane-withdrawals');
+    try {
+      const data = await authFetch('/managers/withdrawals/pending');
+      container.innerHTML = `
+        <div class="card">
+          <div class="card-header"><span class="card-title">Pending Withdrawals (${data.length})</span></div>
+          ${data.length === 0 ? `<p style="color:#b0baca;">No pending withdrawals.</p>` : `
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>User</th><th>Amount</th><th>Bank</th><th>Date</th><th>Actions</th></tr></thead>
+              <tbody>
+                ${data.map(w => `
+                  <tr>
+                    <td>${w.userId?.accountNumber || 'N/A'}</td>
+                    <td>RWF ${w.amount}</td>
+                    <td>${w.bankDetails?.bank || ''} - ${w.bankDetails?.accountNumber || ''}</td>
+                    <td>${new Date(w.createdAt).toLocaleString()}</td>
+                    <td>
+                      <button class="btn btn-sm btn-success" onclick="approveWithdrawal('${w._id}')">Approve</button>
+                      <button class="btn btn-sm btn-danger" onclick="rejectWithdrawal('${w._id}')">Reject</button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>`}
+        </div>
+      `;
+    } catch (err) {
+      container.innerHTML = `<div class="card text-danger">Error: ${err.message}</div>`;
+    }
+  }
+
+  async function approveWithdrawal(id) {
+    if (!confirm('Approve?')) return;
+    try {
+      await authFetch(`/managers/withdrawals/${id}/approve`, { method: 'POST' });
+      alert('Approved');
+      loadWithdrawals();
+    } catch (err) { alert(err.message); }
+  }
+
+  async function rejectWithdrawal(id) {
+    if (!confirm('Reject?')) return;
+    try {
+      await authFetch(`/managers/withdrawals/${id}/reject`, { method: 'POST' });
+      alert('Rejected');
+      loadWithdrawals();
+    } catch (err) { alert(err.message); }
+  }
+
+  async function loadRecharges() {
+    const container = document.getElementById('pane-recharges');
+    try {
+      const data = await authFetch('/managers/recharges/pending');
+      container.innerHTML = `
+        <div class="card">
+          <div class="card-header"><span class="card-title">Pending Recharges (${data.length})</span></div>
+          ${data.length === 0 ? `<p style="color:#b0baca;">No pending recharges.</p>` : `
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>User</th><th>Amount</th><th>Method</th><th>Date</th><th>Actions</th></tr></thead>
+              <tbody>
+                ${data.map(r => `
+                  <tr>
+                    <td>${r.userId?.accountNumber || 'N/A'}</td>
+                    <td>RWF ${r.amount}</td>
+                    <td>${r.method}</td>
+                    <td>${new Date(r.createdAt).toLocaleString()}</td>
+                    <td>
+                      <button class="btn btn-sm btn-success" onclick="approveRecharge('${r._id}')">Approve</button>
+                      <button class="btn btn-sm btn-danger" onclick="rejectRecharge('${r._id}')">Reject</button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>`}
+        </div>
+      `;
+    } catch (err) {
+      container.innerHTML = `<div class="card text-danger">Error: ${err.message}</div>`;
+    }
+  }
+
+  async function approveRecharge(id) {
+    if (!confirm('Approve?')) return;
+    try {
+      await authFetch(`/managers/recharges/${id}/approve`, { method: 'POST' });
+      alert('Approved');
+      loadRecharges();
+    } catch (err) { alert(err.message); }
+  }
+
+  async function rejectRecharge(id) {
+    if (!confirm('Reject?')) return;
+    try {
+      await authFetch(`/managers/recharges/${id}/reject`, { method: 'POST' });
+      alert('Rejected');
+      loadRecharges();
+    } catch (err) { alert(err.message); }
+  }
+
+  // ============================================================
+  // SETTINGS TAB – with Gift Codes (min/max range + delete all)
+  // ============================================================
+  async function loadSettings() {
+    const container = document.getElementById('pane-settings');
+    try {
+      const settings = await authFetch('/managers/settings');
+      const giftCodes = await authFetch('/managers/giftcodes');
+      renderSettings(settings, giftCodes, container);
+    } catch (err) {
+      container.innerHTML = `<div class="card text-danger">Error loading settings: ${err.message}</div>`;
+    }
+  }
+
+  function renderSettings(settings, giftCodes, container) {
+    container.innerHTML = `
+      <!-- Platform Settings -->
+      <div class="card">
+        <h3>Platform Settings</h3>
+        <div class="input-group">
+          <label>MTN Account Number</label>
+          <input type="text" id="mtn-account" value="${settings.mtnAccount || '0792702997'}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
+        </div>
+        <div class="input-group">
+          <label>MTN Account Name</label>
+          <input type="text" id="mtn-name" value="${settings.mtnName || 'ARSENE BAYIRINGIRE'}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
+        </div>
+        <div class="input-group">
+          <label>Airtel Account Number</label>
+          <input type="text" id="airtel-account" value="${settings.airtelAccount || '0737217328'}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
+        </div>
+        <div class="input-group">
+          <label>Airtel Account Name</label>
+          <input type="text" id="airtel-name" value="${settings.airtelName || 'Arsene BAYIRINGIRE'}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
+        </div>
+        <div class="input-group">
+          <label>Minimum Withdrawal (RWF)</label>
+          <input type="number" id="min-withdrawal" value="${settings.minWithdrawal || 3000}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
+        </div>
+        <div class="input-group">
+          <label>Withdrawal Fee (%)</label>
+          <input type="number" id="withdrawal-fee" value="${settings.withdrawalFee || 20}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
+        </div>
+        <button class="btn" onclick="saveSettings()">Save Settings</button>
+      </div>
+
+      <!-- Gift Code Creator (single code with min/max range) -->
+      <div class="card">
+        <h3>Create Gift Code</h3>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+          <div style="flex:2; min-width:120px;">
+            <label style="font-size:13px; color:#b0baca;">Code</label>
+            <input type="text" id="gift-code" placeholder="e.g. bjjhgbnuj" style="width:100%; padding:8px; border-radius:8px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
+          </div>
+          <div style="flex:1; min-width:80px;">
+            <label style="font-size:13px; color:#b0baca;">Min Amount (RWF)</label>
+            <input type="number" id="gift-min" value="1000" style="width:100%; padding:8px; border-radius:8px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
+          </div>
+          <div style="flex:1; min-width:80px;">
+            <label style="font-size:13px; color:#b0baca;">Max Amount (RWF)</label>
+            <input type="number" id="gift-max" value="5000" style="width:100%; padding:8px; border-radius:8px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
+          </div>
+        </div>
+        <button class="btn" onclick="createGiftCode()">Create Gift Code</button>
+      </div>
+
+      <!-- Gift Codes List with Delete All -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Existing Gift Codes (${giftCodes.length})</span>
+          <button class="btn btn-danger" onclick="deleteAllGiftCodes()">Delete All</button>
+        </div>
+        ${giftCodes.length === 0 ? `<p style="color:#b0baca;">No gift codes created yet.</p>` : `
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Code</th><th>Min</th><th>Max</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody>
+                ${giftCodes.map(g => `
+                  <tr>
+                    <td><strong>${g.code}</strong></td>
+                    <td>RWF ${g.minAmount || 0}</td>
+                    <td>RWF ${g.maxAmount || 0}</td>
+                    <td><span class="badge ${g.isActive ? 'badge-success' : 'badge-danger'}">${g.isActive ? 'Active' : 'Used'}</span></td>
+                    <td>
+                      <button class="btn btn-sm btn-danger" onclick="deleteGiftCode('${g._id}')">Delete</button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `}
+      </div>
+
+      <!-- Change Admin Password -->
+      <div class="card">
+        <h3>Change Admin Password</h3>
+        <div class="input-group"><label>Current Password</label><input id="admin-current-pwd" type="password"></div>
+        <div class="input-group"><label>New Password</label><input id="admin-new-pwd" type="password"></div>
+        <div class="input-group"><label>Confirm New Password</label><input id="admin-confirm-pwd" type="password"></div>
+        <button class="btn" onclick="changeAdminPassword()">Update Password</button>
+      </div>
+    `;
+  }
+
+  // ---------- Save Platform Settings ----------
+  async function saveSettings() {
+    const payload = {
+      mtnAccount: document.getElementById('mtn-account').value,
+      mtnName: document.getElementById('mtn-name').value,
+      airtelAccount: document.getElementById('airtel-account').value,
+      airtelName: document.getElementById('airtel-name').value,
+      minWithdrawal: parseFloat(document.getElementById('min-withdrawal').value),
+      withdrawalFee: parseFloat(document.getElementById('withdrawal-fee').value)
+    };
+    try {
+      await authFetch('/managers/settings', { method: 'PUT', body: JSON.stringify(payload) });
+      alert('Settings saved!');
+    } catch (err) { alert(err.message); }
+  }
+
+  // ---------- Create Gift Code with Range ----------
+  async function createGiftCode() {
+    const code = document.getElementById('gift-code').value.trim();
+    const minAmount = parseFloat(document.getElementById('gift-min').value);
+    const maxAmount = parseFloat(document.getElementById('gift-max').value);
+    if (!code || isNaN(minAmount) || isNaN(maxAmount)) {
+      alert('Please enter a valid code and amounts.');
+      return;
+    }
+    if (minAmount > maxAmount) {
+      alert('Min amount cannot be greater than max amount.');
+      return;
+    }
+    try {
+      await authFetch('/managers/giftcodes', {
+        method: 'POST',
+        body: JSON.stringify({ code, minAmount, maxAmount })
+      });
+      alert('✅ Gift code created!');
+      loadSettings();
+    } catch (err) {
+      alert('❌ Error: ' + err.message);
+    }
+  }
+
+  // ---------- Delete All Gift Codes ----------
+  async function deleteAllGiftCodes() {
+    if (!confirm('⚠️ Delete ALL gift codes? This action cannot be undone.')) return;
+    try {
+      const result = await authFetch('/managers/giftcodes/all', { method: 'DELETE' });
+      alert(result.msg || 'All gift codes deleted.');
+      loadSettings();
+    } catch (err) {
+      alert('❌ Error: ' + err.message);
+    }
+  }
+
+  // ---------- Delete Single Gift Code ----------
+  async function deleteGiftCode(id) {
+    if (!confirm('Delete this gift code?')) return;
+    try {
+      await authFetch(`/managers/giftcodes/${id}`, { method: 'DELETE' });
+      alert('Deleted');
+      loadSettings();
+    } catch (err) { alert(err.message); }
+  }
+
+  // ---------- Change Admin Password ----------
+  async function changeAdminPassword() {
+    const current = document.getElementById('admin-current-pwd').value;
+    const newPwd = document.getElementById('admin-new-pwd').value;
+    const confirm = document.getElementById('admin-confirm-pwd').value;
+    if (!current || !newPwd || !confirm) { alert('Fill all fields'); return; }
+    if (newPwd !== confirm) { alert('Passwords do not match'); return; }
+    try {
+      await authFetch('/managers/change-password', {
+        method: 'POST',
+        body: JSON.stringify({ currentPassword: current, newPassword: newPwd })
+      });
+      alert('Password updated!');
+      document.getElementById('admin-current-pwd').value = '';
+      document.getElementById('admin-new-pwd').value = '';
+      document.getElementById('admin-confirm-pwd').value = '';
+    } catch (err) { alert(err.message); }
+  }
+
+  // -------- Logout --------
+  function logout() {
+    localStorage.removeItem('adminToken');
+    adminToken = null;
+    renderLogin();
   }
 
   // -------- Init --------
