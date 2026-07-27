@@ -1,4 +1,4 @@
-const API_BASE = 'https://auto-parts-backend.onrender.com/api'; // Change to production URL when deploying
+const API_BASE = 'https://auto-parts-backend-nh82.onrender.com/api'; // Change to production URL when deploying
 
 // Helper to get token
 const getToken = () => localStorage.getItem('token');
