@@ -5,13 +5,23 @@ export function renderRegister() {
   const app = document.getElementById('app');
   app.className = 'auth-page';
 
-  // ===== READ CODE FROM THE FULL URL =====
+  // ===== READ THE CODE FROM THE HASH (BEFORE THE ROUTER STRIPS IT) =====
   let referralCode = '';
-  const fullUrl = window.location.href;
-  // Match ?code=XXX or &code=XXX (case sensitive)
-  const match = fullUrl.match(/[?&]code=([^&]+)/);
-  if (match) {
-    referralCode = match[1];
+  const hash = window.location.hash; // "#register?code=BN1EL"
+  
+  // Extract code from hash
+  if (hash.includes('?code=')) {
+    const match = hash.match(/[?&]code=([^&]+)/);
+    if (match) referralCode = match[1];
+  }
+
+  // ===== IF A CODE EXISTS, UPDATE THE URL TO KEEP IT VISIBLE =====
+  if (referralCode) {
+    // Replace the URL with the full hash including the code
+    const newHash = `#register?code=${referralCode}`;
+    if (window.location.hash !== newHash) {
+      history.replaceState(null, '', newHash);
+    }
   }
 
   app.innerHTML = `
@@ -48,7 +58,7 @@ export function renderRegister() {
     </div>
   `;
 
-  // ... rest of event listeners
+  // --- Event listeners ---
   document.getElementById('register-btn').addEventListener('click', async () => {
     const account = document.getElementById('reg-account').value.trim();
     const pass = document.getElementById('reg-password').value;
