@@ -41,14 +41,19 @@ export function renderRegister() {
   `;
 
   // ===== AUTO‑FILL INVITATION CODE FROM URL =====
-  // Supports both formats:
-  //   https://.../#register?code=ABC12
-  //   https://.../#/register?code=ABC12
-  const hash = window.location.hash; // e.g., "#register?code=ABC12"
-  const queryIndex = hash.indexOf('?');
-  const queryString = queryIndex !== -1 ? hash.substring(queryIndex + 1) : '';
-  const urlParams = new URLSearchParams(queryString);
-  const code = urlParams.get('code');
+  // Extract code from the full URL (works with any format)
+  const fullUrl = window.location.href;
+  const params = new URLSearchParams(fullUrl.split('?')[1] || '');
+  let code = params.get('code');
+  // If not found, try to parse from the hash part (e.g., #register?code=...)
+  if (!code) {
+    const hash = window.location.hash;
+    const hashQuery = hash.split('?')[1];
+    if (hashQuery) {
+      const hashParams = new URLSearchParams(hashQuery);
+      code = hashParams.get('code');
+    }
+  }
   if (code) {
     const inviteInput = document.getElementById('reg-invite');
     if (inviteInput) inviteInput.value = code;
