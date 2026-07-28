@@ -5,21 +5,14 @@ export function renderRegister() {
   const app = document.getElementById('app');
   app.className = 'auth-page';
 
-  // ===== READ THE CODE FROM THE FULL URL (BEFORE HASH) =====
-  // Example: https://.../#register?code=ABC12
-  // window.location.search will be empty because it's after the hash.
-  // So we read from window.location.hash instead.
+  // ===== READ CODE FROM THE FULL URL =====
   let referralCode = '';
-  const hash = window.location.hash; // "#register?code=ABC12"
-  if (hash.includes('?code=')) {
-    const match = hash.match(/[?&]code=([^&]+)/);
-    if (match) referralCode = match[1];
+  const fullUrl = window.location.href;
+  // Match ?code=XXX or &code=XXX (case sensitive)
+  const match = fullUrl.match(/[?&]code=([^&]+)/);
+  if (match) {
+    referralCode = match[1];
   }
-
-  // --- OR, simpler: read from window.location.href ---
-  // const fullUrl = window.location.href;
-  // const match = fullUrl.match(/[?&]code=([^&]+)/);
-  // if (match) referralCode = match[1];
 
   app.innerHTML = `
     <img src="assets/images/register.png" alt="Register" style="width:100%; border-radius:16px 16px 0 0; margin-bottom:20px;" onerror="this.style.display='none'">
@@ -55,5 +48,37 @@ export function renderRegister() {
     </div>
   `;
 
-  // ... rest of your event listeners (unchanged)
+  // ... rest of event listeners
+  document.getElementById('register-btn').addEventListener('click', async () => {
+    const account = document.getElementById('reg-account').value.trim();
+    const pass = document.getElementById('reg-password').value;
+    const pass2 = document.getElementById('reg-password2').value;
+    const invite = document.getElementById('reg-invite').value.trim();
+
+    if (!account || !pass || !pass2) {
+      window.toastError('Please fill all required fields');
+      return;
+    }
+    if (pass !== pass2) {
+      window.toastError('Passwords do not match');
+      return;
+    }
+
+    try {
+      const data = await register(account, pass, invite);
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      window.toastSuccess('Registration successful!');
+      setTimeout(() => window.location.hash = 'home', 1000);
+    } catch (err) {
+      window.toastError(err.message);
+    }
+  });
+
+  document.getElementById('go-to-login').addEventListener('click', (e) => {
+    e.preventDefault();
+    window.location.hash = 'login';
+  });
+
+  document.getElementById('bottom-nav').classList.remove('show');
 }
