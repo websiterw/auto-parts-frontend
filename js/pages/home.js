@@ -16,11 +16,10 @@ export async function renderHome() {
       localStorage.setItem('user', JSON.stringify(user));
       updateBalanceDisplay();
     } catch (e) {
-      // silent fail – user will still see cached balance
+      // silent fail
     }
   }
 
-  // Function to update only the balance display without re-rendering the whole page
   function updateBalanceDisplay() {
     const balanceEl = document.getElementById('balance-amount');
     const incomeEl = document.getElementById('cumulative-income');
@@ -28,7 +27,7 @@ export async function renderHome() {
     if (incomeEl) incomeEl.textContent = `RWF ${user.cumulativeIncome.toFixed(2)}`;
   }
 
-  // Dummy transactions (replace with real API call later)
+  // Dummy transaction data (replace with API later)
   const transactions = [
     { type: 'Recharge', amount: 6000, ref: '******8102', date: '07/25/2026' },
     { type: 'Recharge', amount: 250000, ref: '******4512', date: '07/24/2026' },
@@ -95,21 +94,111 @@ export async function renderHome() {
   const activeNav = document.querySelector('.nav-item[data-page="home"]');
   if (activeNav) activeNav.classList.add('active');
 
-  // Refresh balance immediately and then every 2 seconds
+  // Refresh balance immediately and then every 30 seconds
   await refreshBalance();
   if (refreshInterval) clearInterval(refreshInterval);
-  refreshInterval = setInterval(refreshBalance, 2000); // <-- CHANGED TO 2 SECONDS
+  refreshInterval = setInterval(refreshBalance, 30000);
 
-  // Show launch notification (once per session)
+  // ===== SHOW THE LAUNCH NOTIFICATION (once per session) =====
   showLaunchNotification();
 }
 
+// ============================================================
+// LAUNCH NOTIFICATION (POPUP) – appears once per browser session
+// ============================================================
 function showLaunchNotification() {
+  // If you want it to appear every time, remove this line:
   if (sessionStorage.getItem('launchShown') === 'true') return;
-  // ... existing launch notification code
+
+  const overlay = document.createElement('div');
+  overlay.id = 'launch-overlay';
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+  `;
+
+  const popup = document.createElement('div');
+  popup.style.cssText = `
+    background: #141c2b;
+    border-radius: 20px;
+    max-width: 400px;
+    width: 92%;
+    padding: 24px 20px 20px;
+    border: 1px solid #2a3040;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    max-height: 90vh;
+    overflow-y: auto;
+  `;
+
+  popup.innerHTML = `
+    <h2 style="color: #FF6B00; font-size: 20px; font-weight: 700; text-align: center; margin: 0 0 4px 0;">
+      Auto parts Rwanda Officially Launched
+    </h2>
+    <p style="color: #b0baca; font-size: 14px; text-align: center; margin: 0 0 16px 0;">
+      A brand new experience begins July 18, 2026!
+    </p>
+    <ul style="list-style: none; padding: 0; margin: 0 0 20px 0; font-size: 13px; color: #d0d8e8; line-height: 1.7;">
+      <li style="padding: 4px 0; border-bottom: 1px solid #1e2838;">✓ Invest RWF 5,000 and you can apply for a withdrawal of RWF 3,000</li>
+      <li style="padding: 4px 0; border-bottom: 1px solid #1e2838;">✓ Registration Bonus: RWF 3,000</li>
+      <li style="padding: 4px 0; border-bottom: 1px solid #1e2838;">✓ Daily Check-in: RWF 50</li>
+      <li style="padding: 4px 0; border-bottom: 1px solid #1e2838;">✓ Invite friends to participate and earn up to 38% cash rewards</li>
+      <li style="padding: 4px 0; border-bottom: 1px solid #1e2838;">✓ Daily Return Rate 20%-40%</li>
+      <li style="padding: 4px 0; border-bottom: 1px solid #1e2838;">✓ Product earnings are automatically deposited into your account daily</li>
+      <li style="padding: 4px 0;">✓ Purchase multiple devices to enjoy more earning opportunities</li>
+    </ul>
+    <div style="display: flex; gap: 10px; margin-top: 8px;">
+      <button id="launch-telegram" style="flex: 1; padding: 12px; border: none; border-radius: 30px; background: #FF6B00; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer;">
+        Telegram <i class="fas fa-chevron-right" style="font-size: 12px; margin-left: 4px;"></i>
+      </button>
+      <button id="launch-ok" style="flex: 1; padding: 12px; border: 1px solid #2a3040; border-radius: 30px; background: transparent; color: #b0baca; font-weight: 600; font-size: 15px; cursor: pointer;">
+        OK
+      </button>
+    </div>
+  `;
+
+  overlay.appendChild(popup);
+  document.body.appendChild(overlay);
+
+  // Add animation keyframes
+  if (!document.getElementById('launch-styles')) {
+    const style = document.createElement('style');
+    style.id = 'launch-styles';
+    style.textContent = `
+      @keyframes fadeIn {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  document.getElementById('launch-telegram').addEventListener('click', () => {
+    window.open('https://t.me/your_telegram_bot', '_blank');
+  });
+
+  document.getElementById('launch-ok').addEventListener('click', () => {
+    overlay.remove();
+    sessionStorage.setItem('launchShown', 'true');
+  });
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      overlay.remove();
+      sessionStorage.setItem('launchShown', 'true');
+    }
+  });
 }
 
-// Optional: clean up interval when leaving the page
+// Cleanup interval when leaving the page (optional)
 export function cleanupHome() {
   if (refreshInterval) {
     clearInterval(refreshInterval);
