@@ -5,8 +5,11 @@ export function renderRegister() {
   const app = document.getElementById('app');
   app.className = 'auth-page';
 
+  // 1. Read referral code from URL query string
+  const urlParams = new URLSearchParams(window.location.search);
+  const referralCode = urlParams.get('code') || '';
+
   app.innerHTML = `
-    <!-- Full banner image (replace with your own register.png) -->
     <img src="assets/images/register.png" alt="Register" style="width:100%; border-radius:16px 16px 0 0; margin-bottom:20px;" onerror="this.style.display='none'">
 
     <div class="auth-header" style="margin-top:-10px;">
@@ -29,7 +32,8 @@ export function renderRegister() {
       </div>
       <div class="input-group">
         <label>Invitation code (optional)</label>
-        <input type="text" id="reg-invite" placeholder="Enter invitation code" style="padding:14px;">
+        <!-- 2. Auto-fill the input with the code from URL -->
+        <input type="text" id="reg-invite" placeholder="Enter invitation code" value="${referralCode}" style="padding:14px;">
       </div>
 
       <button class="auth-btn" id="register-btn" style="padding:16px;">Register</button>
@@ -40,6 +44,7 @@ export function renderRegister() {
     </div>
   `;
 
+  // 3. Event listeners (unchanged)
   document.getElementById('register-btn').addEventListener('click', async () => {
     const account = document.getElementById('reg-account').value.trim();
     const pass = document.getElementById('reg-password').value;
