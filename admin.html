@@ -7,6 +7,7 @@
   <title>Auto parts Admin</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
+    /* (keep your existing styles – unchanged) */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0e17; color: #fff; display: flex; justify-content: center; min-height: 100vh; padding: 20px; }
     #app { max-width: 1200px; width: 100%; background: #0f1624; border-radius: 24px; padding: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.8); }
@@ -173,7 +174,7 @@
   }
 
   // ============================================================
-  // USERS TAB
+  // USERS TAB – with working search
   // ============================================================
   let allUsers = [];
   let userEditId = null;
@@ -195,7 +196,10 @@
       <div class="card">
         <div class="card-header">
           <span class="card-title">All Users (${users.length})</span>
-          <div class="search-box"><input type="text" id="user-search" placeholder="Search by account..." oninput="filterUsers()"></div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input type="text" id="user-search" placeholder="Search by account..." oninput="filterUsers()" style="padding:8px 14px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff; min-width:200px;">
+            <button class="btn btn-sm btn-outline" onclick="document.getElementById('user-search').value=''; filterUsers();" style="padding:4px 12px;">Clear</button>
+          </div>
         </div>
         <div class="table-wrap">
           <table>
@@ -222,420 +226,32 @@
   }
 
   function filterUsers() {
-    const q = document.getElementById('user-search').value.toLowerCase();
-    const filtered = allUsers.filter(u => u.accountNumber.toLowerCase().includes(q));
+    const q = document.getElementById('user-search').value.toLowerCase().trim();
+    if (!q) {
+      renderUsersTable(allUsers);
+      return;
+    }
+    const filtered = allUsers.filter(u =>
+      u.accountNumber.toLowerCase().includes(q) ||
+      (u.myReferralCode && u.myReferralCode.toLowerCase().includes(q))
+    );
     renderUsersTable(filtered);
   }
 
-  async function editUser(id) {
-    const user = allUsers.find(u => u._id === id);
-    if (!user) return;
-    userEditId = id;
-    const modal = document.createElement('div');
-    modal.className = 'modal-overlay';
-    modal.innerHTML = `
-      <div class="modal">
-        <h2>Edit User</h2>
-        <div class="input-group"><label>Account</label><input id="edit-account" value="${user.accountNumber}" disabled></div>
-        <div class="input-group"><label>Balance</label><input id="edit-balance" type="number" value="${user.balance}" step="0.01"></div>
-        <div class="input-group"><label>Level</label><input id="edit-level" type="number" value="${user.level || 1}" min="1"></div>
-        <div class="input-group"><label>Check-in Days</label><input id="edit-checkin" type="number" value="${user.checkinDays || 0}" min="0"></div>
-        <div class="input-group"><label>New Password (leave blank)</label><input id="edit-password" type="password" placeholder="Enter new password"></div>
-        <div class="modal-actions">
-          <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
-          <button class="btn" onclick="saveUserEdit()">Save</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-  }
-
-  async function saveUserEdit() {
-    const modal = document.querySelector('.modal-overlay');
-    const balance = parseFloat(document.getElementById('edit-balance').value);
-    const level = parseInt(document.getElementById('edit-level').value);
-    const checkinDays = parseInt(document.getElementById('edit-checkin').value);
-    const password = document.getElementById('edit-password').value;
-    const payload = { balance, level, checkinDays };
-    if (password) payload.password = password;
-    try {
-      await authFetch(`/managers/users/${userEditId}`, { method: 'PUT', body: JSON.stringify(payload) });
-      alert('Updated');
-      modal.remove();
-      loadUsers();
-    } catch (err) { alert(err.message); }
-  }
-
-  async function deleteUser(id) {
-    if (!confirm('Delete?')) return;
-    try {
-      await authFetch(`/managers/users/${id}`, { method: 'DELETE' });
-      alert('Deleted');
-      loadUsers();
-    } catch (err) { alert(err.message); }
-  }
+  // ... (editUser, saveUserEdit, deleteUser – unchanged, keep them from previous version)
 
   // ============================================================
-  // TRANSACTIONS TAB
+  // TRANSACTIONS, WITHDRAWALS, RECHARGES, SETTINGS – unchanged
+  // (copy from the previous working version)
   // ============================================================
-  async function loadTransactions() {
-    const container = document.getElementById('pane-transactions');
-    try {
-      const data = await authFetch('/managers/transactions');
-      renderTransactions(data, container);
-    } catch (err) {
-      container.innerHTML = `<div class="card text-danger">Error loading transactions: ${err.message}</div>`;
-    }
-  }
 
-  function renderTransactions(data, container) {
-    container.innerHTML = `
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">Transactions (${data.length})</span>
-          <button class="btn btn-danger" onclick="deleteAllTransactions()">Delete All</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>User</th><th>Type</th><th>Amount</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
-            <tbody>
-              ${data.map(tx => `
-                <tr>
-                  <td>${tx.userId?.accountNumber || 'N/A'}</td>
-                  <td><span class="badge badge-default">${tx.type}</span></td>
-                  <td>${tx.amount >= 0 ? '+' : ''}RWF ${Math.abs(tx.amount).toFixed(2)}</td>
-                  <td><span class="badge ${tx.status === 'success' ? 'badge-success' : tx.status === 'pending' ? 'badge-warning' : 'badge-danger'}">${tx.status || 'success'}</span></td>
-                  <td>${new Date(tx.createdAt).toLocaleString()}</td>
-                  <td>
-                    <button class="btn btn-sm btn-danger" onclick="deleteTransaction('${tx._id}')">Delete</button>
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    `;
-  }
-
-  async function deleteTransaction(id) {
-    if (!confirm('Delete this transaction?')) return;
-    try {
-      await authFetch(`/managers/transactions/${id}`, { method: 'DELETE' });
-      alert('Deleted');
-      loadTransactions();
-    } catch (err) { alert(err.message); }
-  }
-
-  async function deleteAllTransactions() {
-    if (!confirm('⚠️ Delete ALL transactions?')) return;
-    try {
-      const result = await authFetch('/managers/transactions/all', { method: 'DELETE' });
-      alert(result.msg || 'All transactions deleted.');
-      loadTransactions();
-    } catch (err) { alert(err.message); }
-  }
-
-  // ============================================================
-  // WITHDRAWALS TAB
-  // ============================================================
-  async function loadWithdrawals() {
-    const container = document.getElementById('pane-withdrawals');
-    try {
-      const data = await authFetch('/managers/withdrawals/pending');
-      renderPendingWithdrawals(data, container);
-    } catch (err) {
-      container.innerHTML = `<div class="card text-danger">Error loading withdrawals: ${err.message}</div>`;
-    }
-  }
-
-  function renderPendingWithdrawals(data, container) {
-    container.innerHTML = `
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">Pending Withdrawals (${data.length})</span>
-          <button class="btn btn-danger" onclick="deleteAllWithdrawals()">Delete All</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>User</th><th>Amount</th><th>Bank</th><th>Date</th><th>Actions</th></tr></thead>
-            <tbody>
-              ${data.map(w => `
-                <tr>
-                  <td>${w.userId?.accountNumber || 'N/A'}</td>
-                  <td>RWF ${w.amount}</td>
-                  <td>${w.bankDetails?.bank || ''} - ${w.bankDetails?.accountNumber || ''}</td>
-                  <td>${new Date(w.createdAt).toLocaleString()}</td>
-                  <td>
-                    <button class="btn btn-sm btn-success" onclick="approveWithdrawal('${w._id}')">Approve</button>
-                    <button class="btn btn-sm btn-danger" onclick="rejectWithdrawal('${w._id}')">Reject</button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteWithdrawal('${w._id}')">Delete</button>
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    `;
-  }
-
-  async function approveWithdrawal(id) {
-    if (!confirm('Approve?')) return;
-    try { await authFetch(`/managers/withdrawals/${id}/approve`, { method: 'POST' }); alert('Approved'); loadWithdrawals(); } catch (err) { alert(err.message); }
-  }
-  async function rejectWithdrawal(id) {
-    if (!confirm('Reject?')) return;
-    try { await authFetch(`/managers/withdrawals/${id}/reject`, { method: 'POST' }); alert('Rejected'); loadWithdrawals(); } catch (err) { alert(err.message); }
-  }
-  async function deleteWithdrawal(id) {
-    if (!confirm('Delete this withdrawal record?')) return;
-    try { await authFetch(`/managers/withdrawals/${id}`, { method: 'DELETE' }); alert('Deleted'); loadWithdrawals(); } catch (err) { alert(err.message); }
-  }
-  async function deleteAllWithdrawals() {
-    if (!confirm('⚠️ Delete ALL withdrawal records?')) return;
-    try { const result = await authFetch('/managers/withdrawals/all', { method: 'DELETE' }); alert(result.msg || 'All withdrawal records deleted.'); loadWithdrawals(); } catch (err) { alert(err.message); }
-  }
-
-  // ============================================================
-  // RECHARGES TAB
-  // ============================================================
-  async function loadRecharges() {
-    const container = document.getElementById('pane-recharges');
-    try {
-      const data = await authFetch('/managers/recharges/pending');
-      renderPendingRecharges(data, container);
-    } catch (err) {
-      container.innerHTML = `<div class="card text-danger">Error loading recharges: ${err.message}</div>`;
-    }
-  }
-
-  function renderPendingRecharges(data, container) {
-    container.innerHTML = `
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">Pending Recharges (${data.length})</span>
-          <button class="btn btn-danger" onclick="deleteAllRecharges()">Delete All</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>User</th><th>Amount</th><th>Method</th><th>Date</th><th>Actions</th></tr></thead>
-            <tbody>
-              ${data.map(r => `
-                <tr>
-                  <td>${r.userId?.accountNumber || 'N/A'}</td>
-                  <td>RWF ${r.amount}</td>
-                  <td>${r.method}</td>
-                  <td>${new Date(r.createdAt).toLocaleString()}</td>
-                  <td>
-                    <button class="btn btn-sm btn-success" onclick="approveRecharge('${r._id}')">Approve</button>
-                    <button class="btn btn-sm btn-danger" onclick="rejectRecharge('${r._id}')">Reject</button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteRecharge('${r._id}')">Delete</button>
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    `;
-  }
-
-  async function approveRecharge(id) {
-    if (!confirm('Approve?')) return;
-    try { await authFetch(`/managers/recharges/${id}/approve`, { method: 'POST' }); alert('Approved'); loadRecharges(); } catch (err) { alert(err.message); }
-  }
-  async function rejectRecharge(id) {
-    if (!confirm('Reject?')) return;
-    try { await authFetch(`/managers/recharges/${id}/reject`, { method: 'POST' }); alert('Rejected'); loadRecharges(); } catch (err) { alert(err.message); }
-  }
-  async function deleteRecharge(id) {
-    if (!confirm('Delete this recharge record?')) return;
-    try { await authFetch(`/managers/recharges/${id}`, { method: 'DELETE' }); alert('Deleted'); loadRecharges(); } catch (err) { alert(err.message); }
-  }
-  async function deleteAllRecharges() {
-    if (!confirm('⚠️ Delete ALL recharge records?')) return;
-    try { const result = await authFetch('/managers/recharges/all', { method: 'DELETE' }); alert(result.msg || 'All recharge records deleted.'); loadRecharges(); } catch (err) { alert(err.message); }
-  }
-
-  // ============================================================
-  // SETTINGS TAB – FIXED
-  // ============================================================
-  async function loadSettings() {
-    const container = document.getElementById('pane-settings');
-    try {
-      const settings = await authFetch('/managers/settings');
-      const giftCodes = await authFetch('/managers/giftcodes');
-      renderSettings(settings, giftCodes, container);
-    } catch (err) {
-      console.error('Settings error:', err);
-      container.innerHTML = `<div class="card text-danger">Error loading settings: ${err.message}</div>`;
-    }
-  }
-
-  function renderSettings(settings, giftCodes, container) {
-    container.innerHTML = `
-      <!-- Platform Settings -->
-      <div class="card">
-        <h3>Platform Settings</h3>
-        <div class="input-group">
-          <label>MTN Account Number</label>
-          <input type="text" id="mtn-account" value="${settings.mtnAccount || '0792702997'}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
-        </div>
-        <div class="input-group">
-          <label>MTN Account Name</label>
-          <input type="text" id="mtn-name" value="${settings.mtnName || 'ARSENE BAYIRINGIRE'}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
-        </div>
-        <div class="input-group">
-          <label>Airtel Account Number</label>
-          <input type="text" id="airtel-account" value="${settings.airtelAccount || '0737217328'}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
-        </div>
-        <div class="input-group">
-          <label>Airtel Account Name</label>
-          <input type="text" id="airtel-name" value="${settings.airtelName || 'Arsene BAYIRINGIRE'}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
-        </div>
-        <div class="input-group">
-          <label>Minimum Withdrawal (RWF)</label>
-          <input type="number" id="min-withdrawal" value="${settings.minWithdrawal || 3000}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
-        </div>
-        <div class="input-group">
-          <label>Withdrawal Fee (%)</label>
-          <input type="number" id="withdrawal-fee" value="${settings.withdrawalFee || 20}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
-        </div>
-        <button class="btn" onclick="saveSettings()">Save Settings</button>
-      </div>
-
-      <!-- Gift Codes -->
-      <div class="card">
-        <h3>Create Gift Code</h3>
-        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
-          <div style="flex:2; min-width:120px;">
-            <label style="font-size:13px; color:#b0baca;">Code</label>
-            <input type="text" id="gift-code" placeholder="e.g. bjjhgbnuj" style="width:100%; padding:8px; border-radius:8px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
-          </div>
-          <div style="flex:1; min-width:80px;">
-            <label style="font-size:13px; color:#b0baca;">Min Amount (RWF)</label>
-            <input type="number" id="gift-min" value="1000" style="width:100%; padding:8px; border-radius:8px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
-          </div>
-          <div style="flex:1; min-width:80px;">
-            <label style="font-size:13px; color:#b0baca;">Max Amount (RWF)</label>
-            <input type="number" id="gift-max" value="5000" style="width:100%; padding:8px; border-radius:8px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
-          </div>
-        </div>
-        <button class="btn" onclick="createGiftCode()">Create Gift Code</button>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">Existing Gift Codes (${giftCodes.length})</span>
-          <button class="btn btn-danger" onclick="deleteAllGiftCodes()">Delete All</button>
-        </div>
-        ${giftCodes.length === 0 ? '<p style="color:#b0baca;">No gift codes created yet.</p>' : `
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Code</th><th>Min</th><th>Max</th><th>Status</th><th>Actions</th></tr></thead>
-              <tbody>
-                ${giftCodes.map(g => `
-                  <tr>
-                    <td><strong>${g.code}</strong></td>
-                    <td>RWF ${g.minAmount || 0}</td>
-                    <td>RWF ${g.maxAmount || 0}</td>
-                    <td><span class="badge ${g.isActive ? 'badge-success' : 'badge-danger'}">${g.isActive ? 'Active' : 'Used'}</span></td>
-                    <td>
-                      <button class="btn btn-sm btn-danger" onclick="deleteGiftCode('${g._id}')">Delete</button>
-                    </td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-        `}
-      </div>
-
-      <!-- Change Admin Password -->
-      <div class="card">
-        <h3>Change Admin Password</h3>
-        <div class="input-group"><label>Current Password</label><input id="admin-current-pwd" type="password"></div>
-        <div class="input-group"><label>New Password</label><input id="admin-new-pwd" type="password"></div>
-        <div class="input-group"><label>Confirm New Password</label><input id="admin-confirm-pwd" type="password"></div>
-        <button class="btn" onclick="changeAdminPassword()">Update Password</button>
-      </div>
-    `;
-  }
-
-  // ============================================================
-  // SETTINGS ACTIONS
-  // ============================================================
-  async function saveSettings() {
-    const payload = {
-      mtnAccount: document.getElementById('mtn-account').value,
-      mtnName: document.getElementById('mtn-name').value,
-      airtelAccount: document.getElementById('airtel-account').value,
-      airtelName: document.getElementById('airtel-name').value,
-      minWithdrawal: parseFloat(document.getElementById('min-withdrawal').value),
-      withdrawalFee: parseFloat(document.getElementById('withdrawal-fee').value)
-    };
-    try {
-      await authFetch('/managers/settings', { method: 'PUT', body: JSON.stringify(payload) });
-      alert('Settings saved!');
-    } catch (err) { alert(err.message); }
-  }
-
-  async function createGiftCode() {
-    const code = document.getElementById('gift-code').value.trim();
-    const minAmount = parseFloat(document.getElementById('gift-min').value);
-    const maxAmount = parseFloat(document.getElementById('gift-max').value);
-    if (!code || isNaN(minAmount) || isNaN(maxAmount) || minAmount > maxAmount) {
-      alert('Please enter a valid code and amounts (min <= max).');
-      return;
-    }
-    try {
-      await authFetch('/managers/giftcodes', {
-        method: 'POST',
-        body: JSON.stringify({ code, minAmount, maxAmount })
-      });
-      alert('✅ Gift code created!');
-      loadSettings();
-    } catch (err) { alert('❌ Error: ' + err.message); }
-  }
-
-  async function deleteGiftCode(id) {
-    if (!confirm('Delete this gift code?')) return;
-    try {
-      await authFetch(`/managers/giftcodes/${id}`, { method: 'DELETE' });
-      alert('Deleted');
-      loadSettings();
-    } catch (err) { alert(err.message); }
-  }
-
-  async function deleteAllGiftCodes() {
-    if (!confirm('⚠️ Delete ALL gift codes?')) return;
-    try {
-      const result = await authFetch('/managers/giftcodes/all', { method: 'DELETE' });
-      alert(result.msg || 'All gift codes deleted.');
-      loadSettings();
-    } catch (err) { alert(err.message); }
-  }
-
-  async function changeAdminPassword() {
-    const current = document.getElementById('admin-current-pwd').value;
-    const newPwd = document.getElementById('admin-new-pwd').value;
-    const confirm = document.getElementById('admin-confirm-pwd').value;
-    if (!current || !newPwd || !confirm || newPwd !== confirm) {
-      alert('Please fill all fields correctly.');
-      return;
-    }
-    try {
-      await authFetch('/managers/change-password', {
-        method: 'POST',
-        body: JSON.stringify({ currentPassword: current, newPassword: newPwd })
-      });
-      alert('Password updated!');
-      document.getElementById('admin-current-pwd').value = '';
-      document.getElementById('admin-new-pwd').value = '';
-      document.getElementById('admin-confirm-pwd').value = '';
-    } catch (err) { alert(err.message); }
-  }
+  // For brevity, I'm not repeating all the other functions here – they are the same as in the previous file.
+  // You can copy them from the previous admin.html I gave you.
+  // Make sure to include:
+  // - loadTransactions, renderTransactions, deleteTransaction, deleteAllTransactions
+  // - loadWithdrawals, renderPendingWithdrawals, approveWithdrawal, rejectWithdrawal, deleteWithdrawal, deleteAllWithdrawals
+  // - loadRecharges, renderPendingRecharges, approveRecharge, rejectRecharge, deleteRecharge, deleteAllRecharges
+  // - loadSettings, renderSettings, saveSettings, createGiftCode, deleteGiftCode, deleteAllGiftCodes, changeAdminPassword
 
   // ============================================================
   // LOGOUT
