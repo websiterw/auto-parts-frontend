@@ -175,7 +175,7 @@
   // ============================================================
   // USERS TAB
 // ============================================================
-// USERS TAB (full working version)
+// USERS TAB (full working version with live search)
 // ============================================================
 let allUsers = [];
 let userEditId = null;
@@ -198,7 +198,7 @@ function renderUsersTable(users) {
       <div class="card-header">
         <span class="card-title">All Users (${users.length})</span>
         <div class="search-box">
-          <input type="text" id="user-search" placeholder="Search by account number..." oninput="filterUsers()">
+          <input type="text" id="user-search" placeholder="Search by account number..." style="padding: 8px; border-radius: 8px; border: 1px solid #2a3040; background: #0a0e17; color: #fff; font-size: 14px; width: 200px;">
         </div>
       </div>
       <div class="table-wrap">
@@ -206,7 +206,7 @@ function renderUsersTable(users) {
           <thead>
             <tr><th>Account</th><th>Referral</th><th>Balance</th><th>Level</th><th>Check-in</th><th>Actions</th></tr>
           </thead>
-          <tbody>
+          <tbody id="user-table-body">
             ${users.map(u => `
               <tr>
                 <td><strong>${u.accountNumber}</strong></td>
@@ -225,17 +225,19 @@ function renderUsersTable(users) {
       </div>
     </div>
   `;
+
+  // Bind the search input event after rendering
+  const searchInput = document.getElementById('user-search');
+  if (searchInput) {
+    searchInput.addEventListener('input', filterUsers);
+  }
 }
 
 function filterUsers() {
-  const query = document.getElementById('user-search').value.toLowerCase().trim();
-  if (!query) {
-    renderUsersTable(allUsers);
-    return;
-  }
-  const filtered = allUsers.filter(u =>
-    u.accountNumber.toLowerCase().includes(query)
-  );
+  const searchInput = document.getElementById('user-search');
+  if (!searchInput) return;
+  const query = searchInput.value.toLowerCase().trim();
+  const filtered = query === '' ? allUsers : allUsers.filter(u => u.accountNumber.toLowerCase().includes(query));
   renderUsersTable(filtered);
 }
 
@@ -252,7 +254,7 @@ async function editUser(id) {
       <div class="input-group"><label>Balance (RWF)</label><input id="edit-balance" type="number" value="${user.balance}" step="0.01"></div>
       <div class="input-group"><label>Level</label><input id="edit-level" type="number" value="${user.level || 1}" min="1"></div>
       <div class="input-group"><label>Check-in Days</label><input id="edit-checkin" type="number" value="${user.checkinDays || 0}" min="0"></div>
-      <div class="input-group"><label>New Password (leave blank to keep)</label><input id="edit-password" type="password" placeholder="Enter new password"></div>
+      <div class="input-group"><label>New Password (leave blank)</label><input id="edit-password" type="password" placeholder="Enter new password"></div>
       <div class="modal-actions">
         <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
         <button class="btn" onclick="saveUserEdit()">Save</button>
