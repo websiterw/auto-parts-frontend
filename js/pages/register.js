@@ -40,8 +40,12 @@ export function renderRegister() {
     </div>
   `;
 
-  // ----- AUTO‑FILL INVITATION CODE FROM URL ?code=... -----
-  const urlParams = new URLSearchParams(window.location.search);
+  // ----- AUTO‑FILL INVITATION CODE FROM URL ?code=... (even after hash) -----
+  // URL format: https://.../#/register?code=ABC12
+  // Extract query string from the hash part
+  const hash = window.location.hash;
+  const queryString = hash.includes('?') ? hash.split('?')[1] : '';
+  const urlParams = new URLSearchParams(queryString);
   const code = urlParams.get('code');
   if (code) {
     const inviteInput = document.getElementById('reg-invite');
