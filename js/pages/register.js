@@ -6,7 +6,7 @@ export function renderRegister() {
   app.className = 'auth-page';
 
   app.innerHTML = `
-    <!-- Full banner image (replace with your own register.png) -->
+    <!-- Full banner image -->
     <img src="assets/images/register.png" alt="Register" style="width:100%; border-radius:16px 16px 0 0; margin-bottom:20px;" onerror="this.style.display='none'">
 
     <div class="auth-header" style="margin-top:-10px;">
@@ -40,11 +40,13 @@ export function renderRegister() {
     </div>
   `;
 
-  // ----- AUTO‑FILL INVITATION CODE FROM URL ?code=... (even after hash) -----
-  // URL format: https://.../#/register?code=ABC12
-  // Extract query string from the hash part
-  const hash = window.location.hash;
-  const queryString = hash.includes('?') ? hash.split('?')[1] : '';
+  // ===== AUTO‑FILL INVITATION CODE FROM URL =====
+  // Supports both formats:
+  //   https://.../#register?code=ABC12
+  //   https://.../#/register?code=ABC12
+  const hash = window.location.hash; // e.g., "#register?code=ABC12"
+  const queryIndex = hash.indexOf('?');
+  const queryString = queryIndex !== -1 ? hash.substring(queryIndex + 1) : '';
   const urlParams = new URLSearchParams(queryString);
   const code = urlParams.get('code');
   if (code) {
