@@ -1,4 +1,5 @@
-const API_BASE = 'https://auto-parts-backend-nh82.onrender.com/api'; // Change to production URL when deploying
+const API_BASE = 'https://auto-parts-backend-nh82.onrender.com/api'; // Production URL
+// For local testing, change to: 'http://localhost:5000/api'
 
 // Helper to get token
 const getToken = () => localStorage.getItem('token');
@@ -62,7 +63,7 @@ export const purchaseProduct = (productId) =>
 export const getInvestments = () => apiCall('/investments');
 
 // ============================================
-// TEAM (GET)
+// TEAM
 // ============================================
 export const getTeamData = () => apiCall('/team');
 
