@@ -6,52 +6,49 @@ export function renderRegister() {
   app.className = 'auth-page';
 
   app.innerHTML = `
-    <div class="auth-header">
-      <div style="position:relative;">
-        <img src="assets/images/logo.png" alt="Auto parts" class="auth-logo" 
-             onerror="this.style.display='none'; this.parentElement.querySelector('.logo-fallback').style.display='block';">
-        <div class="logo-fallback">🚲</div>
-      </div>
-      <h1>AUTO PARTS</h1>
-      <p class="sub">REGISTER</p>
+    <!-- Full banner image (replace with your own register.png) -->
+    <img src="assets/images/register.png" alt="Register" style="width:100%; border-radius:16px 16px 0 0; margin-bottom:20px;" onerror="this.style.display='none'">
+
+    <div class="auth-header" style="margin-top:-10px;">
+      <h1 style="font-size:24px;">AUTO PARTS</h1>
+      <p class="sub" style="color:#888;">Register</p>
     </div>
 
     <div class="auth-card">
       <div class="input-group">
         <label>Account number</label>
-        <input type="text" id="reg-account" placeholder="Enter account number">
+        <input type="text" id="reg-account" placeholder="Enter account number" style="padding:14px;">
       </div>
       <div class="input-group">
         <label>Enter password</label>
-        <input type="password" id="reg-password" placeholder="Enter password">
+        <input type="password" id="reg-password" placeholder="Enter password" style="padding:14px;">
       </div>
       <div class="input-group">
         <label>Re-enter password</label>
-        <input type="password" id="reg-password2" placeholder="Re-enter password">
+        <input type="password" id="reg-password2" placeholder="Re-enter password" style="padding:14px;">
       </div>
       <div class="input-group">
         <label>Invitation code (optional)</label>
-        <input type="text" id="reg-invite" placeholder="Enter invitation code">
+        <input type="text" id="reg-invite" placeholder="Enter invitation code" style="padding:14px;">
       </div>
 
-      <button class="auth-btn" id="register-btn">Register</button>
+      <button class="auth-btn" id="register-btn" style="padding:16px;">Register</button>
 
-      <div class="auth-footer">
-        Already have an account? <a href="#" class="link" id="go-to-login">Login</a>
+      <div class="auth-footer" style="margin-top:12px;">
+        Already have an account? <a href="#" class="link" id="go-to-login">Go to login ></a>
       </div>
     </div>
   `;
 
-  // ---- Auto‑fill invitation code from URL parameters ----
+  // ----- AUTO‑FILL INVITATION CODE FROM URL ?code=... -----
   const urlParams = new URLSearchParams(window.location.search);
-  // Try multiple parameter names
-  const code = urlParams.get('code') || urlParams.get('ref') || urlParams.get('reffcode');
+  const code = urlParams.get('code');
   if (code) {
     const inviteInput = document.getElementById('reg-invite');
     if (inviteInput) inviteInput.value = code;
   }
 
-  // Event listeners (unchanged)
+  // ----- Event listeners -----
   document.getElementById('register-btn').addEventListener('click', async () => {
     const account = document.getElementById('reg-account').value.trim();
     const pass = document.getElementById('reg-password').value;
