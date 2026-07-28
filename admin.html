@@ -174,106 +174,72 @@
 
   // ============================================================
   // USERS TAB
-  // ============================================================
-  let allUsers = [];
-  let userEditId = null;
+ // -------- USERS TAB --------
+let allUsers = [];
+let userEditId = null;
 
-  async function loadUsers() {
-    const container = document.getElementById('pane-users');
-    try {
-      const users = await authFetch('/managers/users');
-      allUsers = users;
-      renderUsersTable(users);
-    } catch (err) {
-      container.innerHTML = `<div class="card text-danger">Error loading users: ${err.message}</div>`;
-    }
+async function loadUsers() {
+  const container = document.getElementById('pane-users');
+  try {
+    const users = await authFetch('/managers/users');
+    allUsers = users;
+    renderUsersTable(users);
+  } catch (err) {
+    container.innerHTML = `<div class="card text-danger">Error loading users: ${err.message}</div>`;
   }
+}
 
-  function renderUsersTable(users) {
-    const container = document.getElementById('pane-users');
-    container.innerHTML = `
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">All Users (${users.length})</span>
-          <div class="search-box"><input type="text" id="user-search" placeholder="Search by account..." oninput="filterUsers()"></div>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Account</th><th>Referral</th><th>Balance</th><th>Level</th><th>Check-in</th><th>Actions</th></tr></thead>
-            <tbody>
-              ${users.map(u => `
-                <tr>
-                  <td><strong>${u.accountNumber}</strong></td>
-                  <td>${u.myReferralCode || '-'}</td>
-                  <td>RWF ${u.balance.toFixed(2)}</td>
-                  <td>LV${u.level || 1}</td>
-                  <td>${u.checkinDays || 0}</td>
-                  <td>
-                    <button class="btn btn-sm btn-outline" onclick="editUser('${u._id}')">Edit</button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteUser('${u._id}')">Delete</button>
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
+function renderUsersTable(users) {
+  const container = document.getElementById('pane-users');
+  container.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">All Users (${users.length})</span>
+        <div class="search-box" style="display:flex; gap:8px; align-items:center;">
+          <input type="text" id="user-search" placeholder="🔍 Search by account number..." 
+                 style="padding:8px 14px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff; font-size:14px; min-width:200px;"
+                 oninput="filterUsers()">
+          <button class="btn btn-sm btn-outline" onclick="document.getElementById('user-search').value=''; filterUsers();" style="padding:4px 12px;">Clear</button>
         </div>
       </div>
-    `;
-  }
-
-  function filterUsers() {
-    const q = document.getElementById('user-search').value.toLowerCase();
-    const filtered = allUsers.filter(u => u.accountNumber.toLowerCase().includes(q));
-    renderUsersTable(filtered);
-  }
-
-  async function editUser(id) {
-    const user = allUsers.find(u => u._id === id);
-    if (!user) return;
-    userEditId = id;
-    const modal = document.createElement('div');
-    modal.className = 'modal-overlay';
-    modal.innerHTML = `
-      <div class="modal">
-        <h2>Edit User</h2>
-        <div class="input-group"><label>Account</label><input id="edit-account" value="${user.accountNumber}" disabled></div>
-        <div class="input-group"><label>Balance</label><input id="edit-balance" type="number" value="${user.balance}" step="0.01"></div>
-        <div class="input-group"><label>Level</label><input id="edit-level" type="number" value="${user.level || 1}" min="1"></div>
-        <div class="input-group"><label>Check-in Days</label><input id="edit-checkin" type="number" value="${user.checkinDays || 0}" min="0"></div>
-        <div class="input-group"><label>New Password (leave blank)</label><input id="edit-password" type="password" placeholder="Enter new password"></div>
-        <div class="modal-actions">
-          <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
-          <button class="btn" onclick="saveUserEdit()">Save</button>
-        </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Account</th><th>Referral</th><th>Balance</th><th>Level</th><th>Check-in</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="user-table-body">
+            ${users.map(u => `
+              <tr>
+                <td><strong>${u.accountNumber}</strong></td>
+                <td>${u.myReferralCode || '-'}</td>
+                <td>RWF ${u.balance.toFixed(2)}</td>
+                <td>LV${u.level || 1}</td>
+                <td>${u.checkinDays || 0}</td>
+                <td>
+                  <button class="btn btn-sm btn-outline" onclick="editUser('${u._id}')">Edit</button>
+                  <button class="btn btn-sm btn-danger" onclick="deleteUser('${u._id}')">Delete</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
       </div>
-    `;
-    document.body.appendChild(modal);
-  }
+    </div>
+  `;
+}
 
-  async function saveUserEdit() {
-    const modal = document.querySelector('.modal-overlay');
-    const balance = parseFloat(document.getElementById('edit-balance').value);
-    const level = parseInt(document.getElementById('edit-level').value);
-    const checkinDays = parseInt(document.getElementById('edit-checkin').value);
-    const password = document.getElementById('edit-password').value;
-    const payload = { balance, level, checkinDays };
-    if (password) payload.password = password;
-    try {
-      await authFetch(`/managers/users/${userEditId}`, { method: 'PUT', body: JSON.stringify(payload) });
-      alert('Updated');
-      modal.remove();
-      loadUsers();
-    } catch (err) { alert(err.message); }
+// Filter function – searches by account number (exact match or partial)
+function filterUsers() {
+  const query = document.getElementById('user-search').value.trim().toLowerCase();
+  if (!query) {
+    renderUsersTable(allUsers);
+    return;
   }
-
-  async function deleteUser(id) {
-    if (!confirm('Delete?')) return;
-    try {
-      await authFetch(`/managers/users/${id}`, { method: 'DELETE' });
-      alert('Deleted');
-      loadUsers();
-    } catch (err) { alert(err.message); }
-  }
+  const filtered = allUsers.filter(u => 
+    u.accountNumber && u.accountNumber.toLowerCase().includes(query)
+  );
+  renderUsersTable(filtered);
+}
 
   // ============================================================
   // TRANSACTIONS TAB
