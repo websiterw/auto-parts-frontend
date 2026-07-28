@@ -5,9 +5,8 @@ export async function renderTeam() {
   const user = JSON.parse(localStorage.getItem('user')) || {};
   app.className = 'dark-page';
 
-  // ======== USE YOUR PRODUCTION FRONTEND URL ========
+  // ===== USE YOUR FRONTEND URL (without the #) =====
   const FRONTEND_URL = 'https://auto-parts-nine-chi.vercel.app';
-  // =================================================
 
   const topImage = 'assets/images/team-1.png';
   const bottomImage = 'assets/images/team-2.png';
@@ -34,8 +33,11 @@ export async function renderTeam() {
     }
   } catch (err) {
     console.error('Error loading team data:', err);
-    // Keep default zeros
   }
+
+  // ===== Build the referral link =====
+  const referralCode = user.myReferralCode || 'ABC12';
+  const referralLink = `${FRONTEND_URL}/#register?code=${referralCode}`;
 
   app.innerHTML = `
     <div style="padding: 12px 0 8px;">
@@ -55,16 +57,16 @@ export async function renderTeam() {
       <div class="card" style="text-align:center; padding:16px;">
         <p style="font-weight:600; color:#fff;">Start inviting friends now</p>
         <div style="display:flex; gap:8px; align-items:center; margin:8px 0;">
-          <code style="background:#0a0e17; padding:4px 10px; border-radius:4px; flex:1; color:#fff;">${user.myReferralCode || 'ABC12'}</code>
+          <code style="background:#0a0e17; padding:4px 10px; border-radius:4px; flex:1; color:#fff;">${referralCode}</code>
           <button class="btn btn-small" id="copy-code">Copy</button>
         </div>
         <div style="display:flex; gap:8px; align-items:center;">
-          <code style="background:#0a0e17; padding:4px 10px; border-radius:4px; flex:1; color:#fff; font-size:12px;">${FRONTEND_URL}/#register?code=${user.myReferralCode || 'ABC12'}</code>
+          <code style="background:#0a0e17; padding:4px 10px; border-radius:4px; flex:1; color:#fff; font-size:12px;">${referralLink}</code>
           <button class="btn btn-small" id="copy-link">Copy</button>
         </div>
       </div>
 
-      <!-- Stats: Total Users & Total Rewards (clickable) -->
+      <!-- Stats -->
       <div style="display:flex; gap:10px; margin:12px 0;">
         <button id="stats-users" style="flex:1; background:none; border:none; cursor:pointer; padding:0; text-align:center;">
           <div class="card" style="padding:12px;">
@@ -98,7 +100,7 @@ export async function renderTeam() {
         </div>
       `).join('')}
 
-      <!-- Info text (updated to 35% / 2% / 1%) -->
+      <!-- Info text -->
       <div class="card" style="background:#1a2a3a; margin-top:12px; font-size:13px; color:#b0baca;">
         <p>When a friend you invite registers and invests, you will immediately receive a <strong style="color:#FF6B00;">35%</strong> cash reward on their investment.</p>
         <p style="margin-top:4px;">When your second-tier team members invest, you will receive a <strong style="color:#FF6B00;">2%</strong> cash reward.</p>
@@ -126,7 +128,6 @@ export async function renderTeam() {
   document.getElementById('stats-users').addEventListener('click', goToTeamRecords);
   document.getElementById('stats-rewards').addEventListener('click', goToTeamRecords);
 
-  // Highlight bottom nav
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
   const activeNav = document.querySelector('.nav-item[data-page="team"]');
   if (activeNav) activeNav.classList.add('active');
