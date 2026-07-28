@@ -85,27 +85,54 @@ const routes = {
   `)
 };
 
-// Main router
+// ============================================================
+// MAIN ROUTER – PRESERVES QUERY STRING FOR REFERRAL CODE
+// ============================================================
 function loadPage() {
-  let hash = window.location.hash.replace('#', '') || 'register';
-
-  const token = localStorage.getItem('token');
-  if (!token && hash !== 'register' && hash !== 'login') {
-    hash = 'register';
-    window.location.hash = 'register';
+  // 1. Get the full hash (including query string)
+  const fullHash = window.location.hash; // e.g., "#register?code=BN1EL"
+  
+  // 2. Extract page name and query string
+  let page = 'register';
+  let query = '';
+  if (fullHash) {
+    const parts = fullHash.split('?');
+    page = parts[0].replace('#', '') || 'register';
+    query = parts[1] || '';
   }
 
-  const render = routes[hash];
+  // 3. If there's a query string with a code, store it globally
+  if (query.includes('code=')) {
+    const match = query.match(/code=([^&]+)/);
+    if (match) window._referralCode = match[1];
+  } else {
+    window._referralCode = '';
+  }
+
+  const token = localStorage.getItem('token');
+  
+  // 4. If not logged in and not on register/login, go to register (but keep the query!)
+  if (!token && page !== 'register' && page !== 'login') {
+    page = 'register';
+    // Preserve the query string if it exists
+    const newHash = query ? `#register?${query}` : '#register';
+    if (window.location.hash !== newHash) {
+      history.replaceState(null, '', newHash);
+    }
+  }
+
+  // 5. Render the page
+  const render = routes[page];
   if (render) {
     render();
 
     const nav = document.getElementById('bottom-nav');
     const mainPages = ['home', 'product', 'team', 'mine'];
 
-    if (mainPages.includes(hash) && token) {
+    if (mainPages.includes(page) && token) {
       nav.classList.add('show');
       document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-      const activeNav = document.querySelector(`.nav-item[data-page="${hash}"]`);
+      const activeNav = document.querySelector(`.nav-item[data-page="${page}"]`);
       if (activeNav) activeNav.classList.add('active');
     } else {
       nav.classList.remove('show');
