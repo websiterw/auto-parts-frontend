@@ -1,8 +1,11 @@
+import { register } from '../api.js';
+import { toastError, toastSuccess } from '../api.js';
+
 export function renderRegister() {
   const app = document.getElementById('app');
   app.className = 'auth-page';
 
-  // ===== READ THE CODE FROM THE GLOBAL VARIABLE =====
+  // Read referral code from the global variable set by app.js
   const referralCode = window._referralCode || '';
 
   app.innerHTML = `
@@ -39,5 +42,40 @@ export function renderRegister() {
     </div>
   `;
 
-  // ... rest of event listeners (unchanged)
+  // ===== EVENT LISTENERS =====
+  document.getElementById('register-btn').addEventListener('click', async () => {
+    const account = document.getElementById('reg-account').value.trim();
+    const pass = document.getElementById('reg-password').value;
+    const pass2 = document.getElementById('reg-password2').value;
+    const invite = document.getElementById('reg-invite').value.trim();
+
+    // Validation
+    if (!account || !pass || !pass2) {
+      toastError('Please fill all required fields');
+      return;
+    }
+    if (pass !== pass2) {
+      toastError('Passwords do not match');
+      return;
+    }
+
+    try {
+      const data = await register(account, pass, invite);
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      toastSuccess('Registration successful!');
+      setTimeout(() => {
+        window.location.hash = 'home';
+      }, 1000);
+    } catch (err) {
+      toastError(err.message || 'Registration failed');
+    }
+  });
+
+  document.getElementById('go-to-login').addEventListener('click', (e) => {
+    e.preventDefault();
+    window.location.hash = 'login';
+  });
+
+  document.getElementById('bottom-nav').classList.remove('show');
 }
