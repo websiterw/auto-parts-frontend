@@ -35,7 +35,8 @@ export function renderRedeemGift() {
     }
     try {
       const data = await redeemGift(code);
-      window.toastSuccess(`Gift redeemed! +RWF ${data.balance}`);
+      // Show only the amount gained, NOT the total balance
+      window.toastSuccess(`🎁 Gift redeemed! +RWF ${data.amount}`);
       // Update local user balance
       const user = JSON.parse(localStorage.getItem('user'));
       user.balance = data.balance;
