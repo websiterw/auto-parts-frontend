@@ -175,20 +175,29 @@
   // ============================================================
   // USERS TAB
 // ============================================================
-// USERS TAB – FULLY WORKING
+// ============================================================
+// USERS TAB – with working Edit & Delete
 // ============================================================
 let allUsers = [];
 let userEditId = null;
 
-async function loadUsers() {
-  const container = document.getElementById('pane-users');
-  try {
-    const users = await authFetch('/managers/users');
-    allUsers = users;
-    renderUsersTable(users);
-  } catch (err) {
-    container.innerHTML = `<div class="card text-danger">Error loading users: ${err.message}</div>`;
-  }
+// -------- Render functions --------
+function renderUsers(users) {
+  const tableBody = document.getElementById('user-table-body');
+  if (!tableBody) return;
+  tableBody.innerHTML = users.map(u => `
+    <tr>
+      <td><strong>${u.accountNumber}</strong></td>
+      <td>${u.myReferralCode || '-'}</td>
+      <td>RWF ${u.balance.toFixed(2)}</td>
+      <td>LV${u.level || 1}</td>
+      <td>${u.checkinDays || 0}</td>
+      <td>
+        <button class="btn btn-sm btn-outline" onclick="editUser('${u._id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteUser('${u._id}')">Delete</button>
+      </td>
+    </tr>
+  `).join('');
 }
 
 function renderUsersTable(users) {
@@ -206,115 +215,85 @@ function renderUsersTable(users) {
           <thead>
             <tr><th>Account</th><th>Referral</th><th>Balance</th><th>Level</th><th>Check-in</th><th>Actions</th></tr>
           </thead>
-          <tbody>
-            ${users.map(u => `
-              <tr>
-                <td><strong>${u.accountNumber}</strong></td>
-                <td>${u.myReferralCode || '-'}</td>
-                <td>RWF ${u.balance.toFixed(2)}</td>
-                <td>LV${u.level || 1}</td>
-                <td>${u.checkinDays || 0}</td>
-                <td>
-                  <button class="btn btn-sm btn-outline" data-id="${u._id}" onclick="editUser('${u._id}')">Edit</button>
-                  <button class="btn btn-sm btn-danger" data-id="${u._id}" onclick="deleteUser('${u._id}')">Delete</button>
-                </td>
-              </tr>
-            `).join('')}
+          <tbody id="user-table-body">
+            <!-- rows will be inserted here -->
           </tbody>
         </table>
       </div>
     </div>
   `;
+  // Populate with all users after building
+  filterUsers();
 }
 
 function filterUsers() {
-  const query = document.getElementById('user-search').value.toLowerCase().trim();
-  if (!query) {
-    renderUsersTable(allUsers);
-    return;
-  }
-  const filtered = allUsers.filter(u =>
-    u.accountNumber.toLowerCase().includes(query)
-  );
-  renderUsersTable(filtered);
+  const input = document.getElementById('user-search');
+  if (!input) return;
+  const query = input.value.toLowerCase().trim();
+  const filtered = query === '' ? allUsers : allUsers.filter(u => u.accountNumber.toLowerCase().includes(query));
+  renderUsers(filtered);
+  // update title count
+  const title = document.querySelector('#pane-users .card-title');
+  if (title) title.textContent = `All Users (${filtered.length})`;
 }
 
-// ===== EDIT USER =====
+async function loadUsers() {
+  const container = document.getElementById('pane-users');
+  try {
+    const users = await authFetch('/managers/users');
+    allUsers = users;
+    renderUsersTable(users);
+  } catch (err) {
+    container.innerHTML = `<div class="card text-danger">Error loading users: ${err.message}</div>`;
+  }
+}
+
+// -------- Edit User --------
 async function editUser(id) {
   const user = allUsers.find(u => u._id === id);
-  if (!user) {
-    alert('User not found');
-    return;
-  }
+  if (!user) return;
   userEditId = id;
-
-  // Create modal overlay
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  overlay.id = 'edit-modal';
-
-  overlay.innerHTML = `
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
     <div class="modal">
       <h2>Edit User</h2>
-      <div class="input-group">
-        <label>Account</label>
-        <input id="edit-account" value="${user.accountNumber}" disabled>
-      </div>
-      <div class="input-group">
-        <label>Balance (RWF)</label>
-        <input id="edit-balance" type="number" value="${user.balance}" step="0.01">
-      </div>
-      <div class="input-group">
-        <label>Level</label>
-        <input id="edit-level" type="number" value="${user.level || 1}" min="1">
-      </div>
-      <div class="input-group">
-        <label>Check-in Days</label>
-        <input id="edit-checkin" type="number" value="${user.checkinDays || 0}" min="0">
-      </div>
-      <div class="input-group">
-        <label>New Password (leave blank to keep)</label>
-        <input id="edit-password" type="password" placeholder="Enter new password">
-      </div>
+      <div class="input-group"><label>Account</label><input id="edit-account" value="${user.accountNumber}" disabled></div>
+      <div class="input-group"><label>Balance (RWF)</label><input id="edit-balance" type="number" value="${user.balance}" step="0.01"></div>
+      <div class="input-group"><label>Level</label><input id="edit-level" type="number" value="${user.level || 1}" min="1"></div>
+      <div class="input-group"><label>Check-in Days</label><input id="edit-checkin" type="number" value="${user.checkinDays || 0}" min="0"></div>
+      <div class="input-group"><label>New Password (leave blank to keep)</label><input id="edit-password" type="password" placeholder="Enter new password"></div>
       <div class="modal-actions">
-        <button class="btn btn-outline" onclick="closeEditModal()">Cancel</button>
+        <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
         <button class="btn" onclick="saveUserEdit()">Save</button>
       </div>
     </div>
   `;
-
-  document.body.appendChild(overlay);
+  document.body.appendChild(modal);
 }
 
-function closeEditModal() {
-  const modal = document.getElementById('edit-modal');
-  if (modal) modal.remove();
-}
-
-// ===== SAVE USER EDIT =====
 async function saveUserEdit() {
+  const modal = document.querySelector('.modal-overlay');
   const balance = parseFloat(document.getElementById('edit-balance').value);
   const level = parseInt(document.getElementById('edit-level').value);
   const checkinDays = parseInt(document.getElementById('edit-checkin').value);
   const password = document.getElementById('edit-password').value;
-
   const payload = { balance, level, checkinDays };
   if (password) payload.password = password;
-
   try {
     await authFetch(`/managers/users/${userEditId}`, {
       method: 'PUT',
       body: JSON.stringify(payload)
     });
     alert('User updated successfully!');
-    closeEditModal();
+    modal.remove();
     loadUsers();
   } catch (err) {
     alert('Error: ' + err.message);
   }
 }
 
-// ===== DELETE USER =====
+// -------- Delete User --------
 async function deleteUser(id) {
   if (!confirm('Delete this user? This action is irreversible.')) return;
   try {
