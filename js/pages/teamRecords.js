@@ -18,9 +18,6 @@ export async function renderTeamRecords() {
       level2: data.level2 || [],
       level3: data.level3 || []
     };
-    // Calculate total recharge (sum of all investments from team members)
-    // You'll need to adjust this based on your actual data structure
-    // For now, we'll use a placeholder or you can compute from investments
     totalRecharge = data.totalRecharge || 0;
     isLoading = false;
   } catch (err) {
@@ -105,13 +102,9 @@ export async function renderTeamRecords() {
     }
 
     container.innerHTML = list.map(member => {
-      // Each member should have: accountNumber, createdAt (registration date), and investments
-      // You may need to adjust based on your actual data structure
       const account = member.accountNumber || member.account || 'N/A';
       const masked = maskAccount(account);
       const date = member.createdAt || member.date || new Date();
-      // For amount, you might have member.totalInvested or need to fetch from investments
-      // For now, use a placeholder or 0
       const amount = member.totalInvested || member.amount || 0;
 
       return `
