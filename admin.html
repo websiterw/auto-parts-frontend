@@ -488,65 +488,122 @@ async function deleteAllWithdrawals() {
   try { const result = await authFetch('/managers/withdrawals/all', { method: 'DELETE' }); alert(result.msg || 'All withdrawal records deleted.'); loadWithdrawals(); } catch (err) { alert(err.message); }
 }
   // ============================================================
-  // RECHARGES TAB
-  // ============================================================
-  async function loadRecharges() {
-    const container = document.getElementById('pane-recharges');
-    try {
-      const data = await authFetch('/managers/recharges/pending');
-      renderPendingRecharges(data, container);
-    } catch (err) {
-      container.innerHTML = `<div class="card text-danger">Error loading recharges: ${err.message}</div>`;
-    }
+ // ============================================================
+// RECHARGES TAB – with View button for payment account
+// ============================================================
+async function loadRecharges() {
+  const container = document.getElementById('pane-recharges');
+  try {
+    const data = await authFetch('/managers/recharges/pending');
+    renderPendingRecharges(data, container);
+  } catch (err) {
+    container.innerHTML = `<div class="card text-danger">Error loading recharges: ${err.message}</div>`;
   }
+}
 
-  function renderPendingRecharges(data, container) {
-    container.innerHTML = `
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">Pending Recharges (${data.length})</span>
-          <button class="btn btn-danger" onclick="deleteAllRecharges()">Delete All</button>
+function renderPendingRecharges(data, container) {
+  container.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Pending Recharges (${data.length})</span>
+        <button class="btn btn-danger" onclick="deleteAllRecharges()">Delete All</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Amount</th>
+              <th>Method</th>
+              <th>Payment Account</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.map(r => `
+              <tr>
+                <td>${r.userId?.accountNumber || 'N/A'}</td>
+                <td>RWF ${r.amount}</td>
+                <td>${r.method}</td>
+                <td>
+                  <button class="btn btn-sm btn-outline" onclick="viewRecharge('${r._id}')">
+                    <i class="fas fa-eye"></i> View
+                  </button>
+                </td>
+                <td>${new Date(r.createdAt).toLocaleString()}</td>
+                <td>
+                  <button class="btn btn-sm btn-success" onclick="approveRecharge('${r._id}')">Approve</button>
+                  <button class="btn btn-sm btn-danger" onclick="rejectRecharge('${r._id}')">Reject</button>
+                  <button class="btn btn-sm btn-danger" onclick="deleteRecharge('${r._id}')">Delete</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+// -------- View Recharge (modal with full details) --------
+async function viewRecharge(id) {
+  try {
+    const data = await authFetch('/managers/recharges/pending');
+    const r = data.find(item => item._id === id);
+    if (!r) {
+      alert('Recharge not found.');
+      return;
+    }
+
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal">
+        <h2>Recharge Details</h2>
+        <div style="margin-bottom:8px;">
+          <strong>User:</strong> ${r.userId?.accountNumber || 'N/A'}
         </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>User</th><th>Amount</th><th>Method</th><th>Date</th><th>Actions</th></tr></thead>
-            <tbody>
-              ${data.map(r => `
-                <tr>
-                  <td>${r.userId?.accountNumber || 'N/A'}</td>
-                  <td>RWF ${r.amount}</td>
-                  <td>${r.method}</td>
-                  <td>${new Date(r.createdAt).toLocaleString()}</td>
-                  <td>
-                    <button class="btn btn-sm btn-success" onclick="approveRecharge('${r._id}')">Approve</button>
-                    <button class="btn btn-sm btn-danger" onclick="rejectRecharge('${r._id}')">Reject</button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteRecharge('${r._id}')">Delete</button>
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
+        <div style="margin-bottom:8px;">
+          <strong>Amount:</strong> RWF ${r.amount}
+        </div>
+        <div style="margin-bottom:8px;">
+          <strong>Method:</strong> ${r.method}
+        </div>
+        <div style="margin-bottom:8px;">
+          <strong>Payment Account:</strong> ${r.account || 'Not provided'}
+        </div>
+        <div style="margin-bottom:8px;">
+          <strong>Requested:</strong> ${new Date(r.createdAt).toLocaleString()}
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Close</button>
         </div>
       </div>
     `;
+    document.body.appendChild(modal);
+  } catch (err) {
+    alert('Error loading recharge details: ' + err.message);
   }
+}
 
-  async function approveRecharge(id) {
-    if (!confirm('Approve?')) return;
-    try { await authFetch(`/managers/recharges/${id}/approve`, { method: 'POST' }); alert('Approved'); loadRecharges(); } catch (err) { alert(err.message); }
-  }
-  async function rejectRecharge(id) {
-    if (!confirm('Reject?')) return;
-    try { await authFetch(`/managers/recharges/${id}/reject`, { method: 'POST' }); alert('Rejected'); loadRecharges(); } catch (err) { alert(err.message); }
-  }
-  async function deleteRecharge(id) {
-    if (!confirm('Delete this recharge record?')) return;
-    try { await authFetch(`/managers/recharges/${id}`, { method: 'DELETE' }); alert('Deleted'); loadRecharges(); } catch (err) { alert(err.message); }
-  }
-  async function deleteAllRecharges() {
-    if (!confirm('⚠️ Delete ALL recharge records?')) return;
-    try { const result = await authFetch('/managers/recharges/all', { method: 'DELETE' }); alert(result.msg || 'All recharge records deleted.'); loadRecharges(); } catch (err) { alert(err.message); }
-  }
+// -------- Existing action functions (unchanged) --------
+async function approveRecharge(id) {
+  if (!confirm('Approve?')) return;
+  try { await authFetch(`/managers/recharges/${id}/approve`, { method: 'POST' }); alert('Approved'); loadRecharges(); } catch (err) { alert(err.message); }
+}
+async function rejectRecharge(id) {
+  if (!confirm('Reject?')) return;
+  try { await authFetch(`/managers/recharges/${id}/reject`, { method: 'POST' }); alert('Rejected'); loadRecharges(); } catch (err) { alert(err.message); }
+}
+async function deleteRecharge(id) {
+  if (!confirm('Delete this recharge record?')) return;
+  try { await authFetch(`/managers/recharges/${id}`, { method: 'DELETE' }); alert('Deleted'); loadRecharges(); } catch (err) { alert(err.message); }
+}
+async function deleteAllRecharges() {
+  if (!confirm('⚠️ Delete ALL recharge records?')) return;
+  try { const result = await authFetch('/managers/recharges/all', { method: 'DELETE' }); alert(result.msg || 'All recharge records deleted.'); loadRecharges(); } catch (err) { alert(err.message); }
+}
 
   // ============================================================
   // SETTINGS TAB – FIXED
