@@ -106,9 +106,12 @@ export async function renderHome() {
 // ============================================================
 // LAUNCH NOTIFICATION (POPUP) – appears once per browser session
 // ============================================================
+// ============================================================
+// LAUNCH NOTIFICATION – appears EVERY time Home is loaded
+// ============================================================
 function showLaunchNotification() {
-  // If you want it to appear every time, remove this line:
-  if (sessionStorage.getItem('launchShown') === 'true') return;
+  // --- REMOVED the sessionStorage check ---
+  // if (sessionStorage.getItem('launchShown') === 'true') return;
 
   const overlay = document.createElement('div');
   overlay.id = 'launch-overlay';
@@ -181,27 +184,22 @@ function showLaunchNotification() {
     document.head.appendChild(style);
   }
 
+  // Fixed Telegram link (removed duplicate https://)
   document.getElementById('launch-telegram').addEventListener('click', () => {
-    window.open('https://https://t.me/+A8If4xQRH7Y1YzBk', '_blank');
+    window.open('https://t.me/+A8If4xQRH7Y1YzBk', '_blank');
   });
 
   document.getElementById('launch-ok').addEventListener('click', () => {
     overlay.remove();
-    sessionStorage.setItem('launchShown', 'true');
+    // You can still keep the sessionStorage if you want it to vanish for the rest of the session after OK
+    // but if you want it to reappear on next home visit, remove this line:
+    // sessionStorage.setItem('launchShown', 'true');
   });
 
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) {
       overlay.remove();
-      sessionStorage.setItem('launchShown', 'true');
+      // sessionStorage.setItem('launchShown', 'true'); // remove if you want it to reappear
     }
   });
-}
-
-// Cleanup interval when leaving the page (optional)
-export function cleanupHome() {
-  if (refreshInterval) {
-    clearInterval(refreshInterval);
-    refreshInterval = null;
-  }
 }
