@@ -1,9 +1,34 @@
 import { getProducts, purchaseProduct, apiCall } from '../api.js';
 import { toastError, toastSuccess } from '../api.js';
 
+// ---- Timer helper ----
+function getTimeRemaining(lastIncomeDate) {
+  const nextIncome = new Date(lastIncomeDate);
+  nextIncome.setHours(nextIncome.getHours() + 24);
+  const now = new Date();
+  const diff = nextIncome - now;
+  if (diff <= 0) return { hours: 0, minutes: 0, seconds: 0, done: true };
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+  return { hours, minutes, seconds, done: false };
+}
+
+function formatTime(h, m, s) {
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+let timerInterval = null;
+
 export async function renderProduct() {
   const app = document.getElementById('app');
   app.className = 'dark-page';
+
+  // Clear any previous timer
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
 
   // Fetch products
   let allProducts = [];
@@ -11,7 +36,6 @@ export async function renderProduct() {
     const res = await getProducts();
     allProducts = res;
   } catch (e) {
-    // fallback
     allProducts = [
       { _id: 'vip1', name: 'Product-1 Auto Parts', price: 6000, termDays: 180, dailyIncome: 1300, totalIncome: 234000, level: 1 },
       { _id: 'vip2', name: 'Product-2 Auto Parts', price: 12000, termDays: 180, dailyIncome: 2800, totalIncome: 504000, level: 2 },
@@ -47,6 +71,7 @@ export async function renderProduct() {
     let content = '';
 
     if (currentView === 'products') {
+      // ---- All Products view (unchanged) ----
       content = `
         <div style="margin-top:12px;">
           ${allProducts.map(p => `
@@ -81,28 +106,39 @@ export async function renderProduct() {
         `;
       }
     } else if (currentView === 'myproducts') {
+      // ---- My Products view with countdown timer ----
       if (myInvestments.length === 0) {
         content = `<div class="card" style="text-align:center; padding:20px; color:#b0baca;">You haven't purchased any product yet.</div>`;
       } else {
         content = `
-          <div style="margin-top:12px;">
-            ${myInvestments.map(inv => `
-              <div class="product-card" style="padding:12px; margin-bottom:12px; display:flex; gap:12px; align-items:center; background:#141c2b; border-radius:12px; border:1px solid #1e2838;">
-                <img src="assets/images/product-${inv.productId || 'vip1'}.png" alt="${inv.productName}" style="width:80px; height:80px; object-fit:cover; border-radius:8px; background:#2a3040;" onerror="this.style.display='none'">
-                <div style="flex:1;">
-                  <h3 style="color:#fff; font-size:16px; margin:0;">${inv.productName}</h3>
-                  <p style="color:#b0baca; font-size:13px; margin:2px 0;">Price: <span style="color:#FF6B00; font-weight:700;">RWF ${inv.price.toLocaleString()}</span></p>
-                  <p style="color:#b0baca; font-size:13px; margin:2px 0;">Daily income: <span style="color:#4caf50;">RWF ${inv.dailyIncome.toLocaleString()}</span></p>
-                  <p style="color:#b0baca; font-size:13px; margin:2px 0;">Received: RWF ${inv.received || 0}</p>
-                  <p style="color:#b0baca; font-size:13px; margin:2px 0;">Total income: RWF ${inv.totalIncome.toLocaleString()}</p>
-                  <p style="color:#b0baca; font-size:13px; margin:2px 0;">Term: ${inv.daysRemaining || inv.termDays || 0} days remaining</p>
+          <div style="margin-top:12px;" id="my-products-container">
+            ${myInvestments.map((inv, idx) => {
+              // Calculate remaining time
+              const lastIncome = inv.lastIncomeDate || inv.purchasedAt || new Date().toISOString();
+              const remaining = getTimeRemaining(lastIncome);
+              const timeStr = remaining.done ? 'Processing...' : formatTime(remaining.hours, remaining.minutes, remaining.seconds);
+              return `
+                <div class="product-card" style="padding:12px; margin-bottom:12px; display:flex; gap:12px; align-items:center; background:#141c2b; border-radius:12px; border:1px solid #1e2838;">
+                  <img src="assets/images/product-${inv.productId || 'vip1'}.png" alt="${inv.productName}" style="width:80px; height:80px; object-fit:cover; border-radius:8px; background:#2a3040;" onerror="this.style.display='none'">
+                  <div style="flex:1;">
+                    <h3 style="color:#fff; font-size:16px; margin:0;">${inv.productName}</h3>
+                    <p style="color:#b0baca; font-size:13px; margin:2px 0;">Price: <span style="color:#FF6B00; font-weight:700;">RWF ${inv.price.toLocaleString()}</span></p>
+                    <p style="color:#b0baca; font-size:13px; margin:2px 0;">Daily income: <span style="color:#4caf50;">RWF ${inv.dailyIncome.toLocaleString()}</span></p>
+                    <p style="color:#b0baca; font-size:13px; margin:2px 0;">Received: RWF ${inv.totalReceived || 0}</p>
+                    <p style="color:#b0baca; font-size:13px; margin:2px 0;">Total income: RWF ${inv.totalIncome.toLocaleString()}</p>
+                    <p style="color:#b0baca; font-size:13px; margin:2px 0;">Term: ${inv.daysRemaining || inv.termDays || 0} days remaining</p>
+                    <p style="color:#FF6B00; font-weight:600; font-size:14px; margin-top:4px;">
+                      Next income in: <span class="timer-display" data-index="${idx}" style="font-family: monospace;">${timeStr}</span>
+                    </p>
+                  </div>
                 </div>
-              </div>
-            `).join('')}
+              `;
+            }).join('')}
           </div>
         `;
       }
     } else if (currentView === 'myincome') {
+      // ---- My Income view (unchanged) ----
       content = `
         <div style="margin-top:12px;">
           <div class="card" style="background:#0a0e17; text-align:center; padding:16px;">
@@ -146,6 +182,35 @@ export async function renderProduct() {
       </div>
     `;
 
+    // ---- Start timer interval if we are in myproducts view ----
+    if (currentView === 'myproducts' && myInvestments.length > 0) {
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        const containers = document.querySelectorAll('.timer-display');
+        if (containers.length === 0) {
+          // If timers disappeared, clear interval
+          clearInterval(timerInterval);
+          timerInterval = null;
+          return;
+        }
+        containers.forEach((el, idx) => {
+          const inv = myInvestments[idx];
+          if (!inv) return;
+          const lastIncome = inv.lastIncomeDate || inv.purchasedAt || new Date().toISOString();
+          const remaining = getTimeRemaining(lastIncome);
+          const timeStr = remaining.done ? 'Processing...' : formatTime(remaining.hours, remaining.minutes, remaining.seconds);
+          el.textContent = timeStr;
+        });
+      }, 1000);
+    } else {
+      // Stop timer if not on myproducts
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    // ---- Event listeners (unchanged) ----
     document.getElementById('view-products').addEventListener('click', () => {
       currentView = 'products';
       renderView();
