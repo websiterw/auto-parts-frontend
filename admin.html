@@ -175,7 +175,8 @@
   // ============================================================
   // USERS TAB
 // ============================================================
-// USERS TAB – with working Edit & Delete
+// ============================================================
+// USERS TAB – with working Edit & Delete + null balance fix
 // ============================================================
 let allUsers = [];
 let userEditId = null;
@@ -188,7 +189,7 @@ function renderUsers(users) {
     <tr>
       <td><strong>${u.accountNumber}</strong></td>
       <td>${u.myReferralCode || '-'}</td>
-      <td>RWF ${u.balance.toFixed(2)}</td>
+      <td>RWF ${(u.balance ?? 0).toFixed(2)}</td> <!-- FIX: handle null balance -->
       <td>LV${u.level || 1}</td>
       <td>${u.checkinDays || 0}</td>
       <td>
@@ -258,7 +259,7 @@ async function editUser(id) {
     <div class="modal">
       <h2>Edit User</h2>
       <div class="input-group"><label>Account</label><input id="edit-account" value="${user.accountNumber}" disabled></div>
-      <div class="input-group"><label>Balance (RWF)</label><input id="edit-balance" type="number" value="${user.balance}" step="0.01"></div>
+      <div class="input-group"><label>Balance (RWF)</label><input id="edit-balance" type="number" value="${user.balance ?? 0}" step="0.01"></div>
       <div class="input-group"><label>Level</label><input id="edit-level" type="number" value="${user.level || 1}" min="1"></div>
       <div class="input-group"><label>Check-in Days</label><input id="edit-checkin" type="number" value="${user.checkinDays || 0}" min="0"></div>
       <div class="input-group"><label>New Password (leave blank to keep)</label><input id="edit-password" type="password" placeholder="Enter new password"></div>
@@ -273,9 +274,9 @@ async function editUser(id) {
 
 async function saveUserEdit() {
   const modal = document.querySelector('.modal-overlay');
-  const balance = parseFloat(document.getElementById('edit-balance').value);
-  const level = parseInt(document.getElementById('edit-level').value);
-  const checkinDays = parseInt(document.getElementById('edit-checkin').value);
+  const balance = parseFloat(document.getElementById('edit-balance').value) || 0;
+  const level = parseInt(document.getElementById('edit-level').value) || 1;
+  const checkinDays = parseInt(document.getElementById('edit-checkin').value) || 0;
   const password = document.getElementById('edit-password').value;
   const payload = { balance, level, checkinDays };
   if (password) payload.password = password;
