@@ -365,67 +365,128 @@ async function deleteUser(id) {
     } catch (err) { alert(err.message); }
   }
 
-  // ============================================================
-  // WITHDRAWALS TAB
-  // ============================================================
-  async function loadWithdrawals() {
-    const container = document.getElementById('pane-withdrawals');
-    try {
-      const data = await authFetch('/managers/withdrawals/pending');
-      renderPendingWithdrawals(data, container);
-    } catch (err) {
-      container.innerHTML = `<div class="card text-danger">Error loading withdrawals: ${err.message}</div>`;
-    }
+// ============================================================
+// WITHDRAWALS TAB – with View button for bank details
+// ============================================================
+async function loadWithdrawals() {
+  const container = document.getElementById('pane-withdrawals');
+  try {
+    const data = await authFetch('/managers/withdrawals/pending');
+    renderPendingWithdrawals(data, container);
+  } catch (err) {
+    container.innerHTML = `<div class="card text-danger">Error loading withdrawals: ${err.message}</div>`;
   }
+}
 
-  function renderPendingWithdrawals(data, container) {
-    container.innerHTML = `
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">Pending Withdrawals (${data.length})</span>
-          <button class="btn btn-danger" onclick="deleteAllWithdrawals()">Delete All</button>
+function renderPendingWithdrawals(data, container) {
+  container.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Pending Withdrawals (${data.length})</span>
+        <button class="btn btn-danger" onclick="deleteAllWithdrawals()">Delete All</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Amount</th>
+              <th>Bank</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.map(w => `
+              <tr>
+                <td>${w.userId?.accountNumber || 'N/A'}</td>
+                <td>RWF ${w.amount}</td>
+                <td>
+                  <button class="btn btn-sm btn-outline" onclick="viewWithdrawal('${w._id}')">
+                    <i class="fas fa-eye"></i> View
+                  </button>
+                </td>
+                <td>${new Date(w.createdAt).toLocaleString()}</td>
+                <td>
+                  <button class="btn btn-sm btn-success" onclick="approveWithdrawal('${w._id}')">Approve</button>
+                  <button class="btn btn-sm btn-danger" onclick="rejectWithdrawal('${w._id}')">Reject</button>
+                  <button class="btn btn-sm btn-danger" onclick="deleteWithdrawal('${w._id}')">Delete</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+// -------- View Withdrawal (modal with full bank details) --------
+async function viewWithdrawal(id) {
+  try {
+    // Fetch the withdrawal record (or find it from the existing data)
+    // We can fetch it directly from the pending list, but it's safer to call the endpoint.
+    // Since we already have the data in the table, we can just find it in the DOM or re-fetch.
+    // Let's re-fetch to be sure we have the latest data.
+    const data = await authFetch('/managers/withdrawals/pending');
+    const w = data.find(item => item._id === id);
+    if (!w) {
+      alert('Withdrawal not found.');
+      return;
+    }
+
+    const bankDetails = w.bankDetails || {};
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal">
+        <h2>Withdrawal Bank Details</h2>
+        <div style="margin-bottom:8px;">
+          <strong>User:</strong> ${w.userId?.accountNumber || 'N/A'}
         </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>User</th><th>Amount</th><th>Bank</th><th>Date</th><th>Actions</th></tr></thead>
-            <tbody>
-              ${data.map(w => `
-                <tr>
-                  <td>${w.userId?.accountNumber || 'N/A'}</td>
-                  <td>RWF ${w.amount}</td>
-                  <td>${w.bankDetails?.bank || ''} - ${w.bankDetails?.accountNumber || ''}</td>
-                  <td>${new Date(w.createdAt).toLocaleString()}</td>
-                  <td>
-                    <button class="btn btn-sm btn-success" onclick="approveWithdrawal('${w._id}')">Approve</button>
-                    <button class="btn btn-sm btn-danger" onclick="rejectWithdrawal('${w._id}')">Reject</button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteWithdrawal('${w._id}')">Delete</button>
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
+        <div style="margin-bottom:8px;">
+          <strong>Amount:</strong> RWF ${w.amount}
+        </div>
+        <div style="margin-bottom:8px;">
+          <strong>Bank Name:</strong> ${bankDetails.bank || 'N/A'}
+        </div>
+        <div style="margin-bottom:8px;">
+          <strong>Account Holder:</strong> ${bankDetails.accountName || 'N/A'}
+        </div>
+        <div style="margin-bottom:8px;">
+          <strong>Account Number:</strong> ${bankDetails.accountNumber || 'N/A'}
+        </div>
+        <div style="margin-bottom:8px;">
+          <strong>Requested:</strong> ${new Date(w.createdAt).toLocaleString()}
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Close</button>
         </div>
       </div>
     `;
+    document.body.appendChild(modal);
+  } catch (err) {
+    alert('Error loading withdrawal details: ' + err.message);
   }
+}
 
-  async function approveWithdrawal(id) {
-    if (!confirm('Approve?')) return;
-    try { await authFetch(`/managers/withdrawals/${id}/approve`, { method: 'POST' }); alert('Approved'); loadWithdrawals(); } catch (err) { alert(err.message); }
-  }
-  async function rejectWithdrawal(id) {
-    if (!confirm('Reject?')) return;
-    try { await authFetch(`/managers/withdrawals/${id}/reject`, { method: 'POST' }); alert('Rejected'); loadWithdrawals(); } catch (err) { alert(err.message); }
-  }
-  async function deleteWithdrawal(id) {
-    if (!confirm('Delete this withdrawal record?')) return;
-    try { await authFetch(`/managers/withdrawals/${id}`, { method: 'DELETE' }); alert('Deleted'); loadWithdrawals(); } catch (err) { alert(err.message); }
-  }
-  async function deleteAllWithdrawals() {
-    if (!confirm('⚠️ Delete ALL withdrawal records?')) return;
-    try { const result = await authFetch('/managers/withdrawals/all', { method: 'DELETE' }); alert(result.msg || 'All withdrawal records deleted.'); loadWithdrawals(); } catch (err) { alert(err.message); }
-  }
-
+// -------- Existing action functions (unchanged) --------
+async function approveWithdrawal(id) {
+  if (!confirm('Approve?')) return;
+  try { await authFetch(`/managers/withdrawals/${id}/approve`, { method: 'POST' }); alert('Approved'); loadWithdrawals(); } catch (err) { alert(err.message); }
+}
+async function rejectWithdrawal(id) {
+  if (!confirm('Reject?')) return;
+  try { await authFetch(`/managers/withdrawals/${id}/reject`, { method: 'POST' }); alert('Rejected'); loadWithdrawals(); } catch (err) { alert(err.message); }
+}
+async function deleteWithdrawal(id) {
+  if (!confirm('Delete this withdrawal record?')) return;
+  try { await authFetch(`/managers/withdrawals/${id}`, { method: 'DELETE' }); alert('Deleted'); loadWithdrawals(); } catch (err) { alert(err.message); }
+}
+async function deleteAllWithdrawals() {
+  if (!confirm('⚠️ Delete ALL withdrawal records?')) return;
+  try { const result = await authFetch('/managers/withdrawals/all', { method: 'DELETE' }); alert(result.msg || 'All withdrawal records deleted.'); loadWithdrawals(); } catch (err) { alert(err.message); }
+}
   // ============================================================
   // RECHARGES TAB
   // ============================================================
