@@ -182,7 +182,7 @@ function showLaunchNotification() {
   }
 
   document.getElementById('launch-telegram').addEventListener('click', () => {
-    window.open('https://t.me/your_telegram_bot', '_blank');
+    window.open('https://https://t.me/+A8If4xQRH7Y1YzBk', '_blank');
   });
 
   document.getElementById('launch-ok').addEventListener('click', () => {
