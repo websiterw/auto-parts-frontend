@@ -187,9 +187,9 @@ function renderUsers(users) {
   if (!tableBody) return;
   tableBody.innerHTML = users.map(u => `
     <tr>
-      <td><strong>${u.accountNumber}</strong></td>
+      <td><strong>${u.accountNumber || 'N/A'}</strong></td>
       <td>${u.myReferralCode || '-'}</td>
-      <td>RWF ${u.balance.toFixed(2)}</td>
+      <td>RWF ${(u.balance !== undefined && u.balance !== null) ? u.balance.toFixed(2) : '0.00'}</td>
       <td>LV${u.level || 1}</td>
       <td>${u.checkinDays || 0}</td>
       <td>
@@ -199,29 +199,6 @@ function renderUsers(users) {
     </tr>
   `).join('');
 }
-
-function renderUsersTable(users) {
-  const container = document.getElementById('pane-users');
-  container.innerHTML = `
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">All Users (${users.length})</span>
-        <div class="search-box">
-          <input type="text" id="user-search" placeholder="Search by account number..." oninput="filterUsers()">
-        </div>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>Account</th><th>Referral</th><th>Balance</th><th>Level</th><th>Check-in</th><th>Actions</th></tr>
-          </thead>
-          <tbody id="user-table-body">
-            <!-- rows will be inserted here -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-  `;
   // Populate with all users after building
   filterUsers();
 }
