@@ -5,7 +5,8 @@ export async function renderTeam() {
   const user = JSON.parse(localStorage.getItem('user')) || {};
   app.className = 'dark-page';
 
-  const FRONTEND_URL = 'https://auto-parts-nine-chi.vercel.app';
+  // ===== UPDATED: Use your new domain =====
+  const FRONTEND_URL = 'https://auto-parts-nine-chi.online';
 
   const topImage = 'assets/images/team-1.png';
   const bottomImage = 'assets/images/team-2.png';
