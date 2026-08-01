@@ -36,7 +36,7 @@ export function renderCustomerService() {
 
   // Telegram links – replace with your actual URLs
   document.getElementById('cs-telegram-service').addEventListener('click', () => {
-    window.open('https://t.me/+A8If4xQRH7Y1YzBk', '_blank');
+    window.open('https://t.me/Autopartsowner', '_blank');
   });
   document.getElementById('cs-telegram-group').addEventListener('click', () => {
     window.open('https://t.me/+A8If4xQRH7Y1YzBk', '_blank');
