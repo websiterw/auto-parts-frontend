@@ -528,7 +528,7 @@
   }
 
 // ============================================================
-// INVESTMENTS TAB (with purchase date, delete, and income logic)
+// INVESTMENTS TAB (with working search)
 // ============================================================
 let allInvestments = [];
 
@@ -595,11 +595,15 @@ function filterInvestments() {
   const input = document.getElementById('invest-search');
   if (!input) return;
   const query = input.value.toLowerCase().trim();
-  const filtered = query === '' ? allInvestments : allInvestments.filter(inv =>
-    inv.userId?.accountNumber?.toLowerCase().includes(query) ||
-    inv.productName?.toLowerCase().includes(query)
-  );
+  const filtered = query === '' ? allInvestments : allInvestments.filter(inv => {
+    const user = (inv.userId?.accountNumber || '').toLowerCase();
+    const product = (inv.productName || '').toLowerCase();
+    return user.includes(query) || product.includes(query);
+  });
   renderInvestments(filtered);
+  // update title count
+  const title = document.querySelector('#pane-investments .card-title');
+  if (title) title.textContent = `Active Investments (${filtered.length})`;
 }
 
 // -------- Edit Investment (modal) --------
@@ -649,7 +653,7 @@ async function saveInvestmentEdit(id) {
   }
 }
 
-// -------- Manually add income (decreases days, updates received) --------
+// -------- Manually add income --------
 async function addIncomeNow(id) {
   if (!confirm('Add one daily income to the user\'s balance for this investment?')) return;
   try {
