@@ -147,7 +147,7 @@ function showLaunchNotification() {
       Auto parts Rwanda Officially Launched
     </h2>
     <p style="color: #b0baca; font-size: 14px; text-align: center; margin: 0 0 16px 0;">
-      A brand new experience begins July 18, 2026!
+      A brand new experience begins august 01, 2026!
     </p>
     <ul style="list-style: none; padding: 0; margin: 0 0 20px 0; font-size: 13px; color: #d0d8e8; line-height: 1.7;">
       <li style="padding: 4px 0; border-bottom: 1px solid #1e2838;">✓ Invest RWF 6,000 and you can apply for a withdrawal of RWF 3,000</li>
