@@ -49,7 +49,8 @@ export async function renderProduct() {
   const user = JSON.parse(localStorage.getItem('user')) || {};
   const isAdmin = user.accountNumber === 'admin';
 
-  let currentView = 'products'; // 'products' | 'myproducts' | 'myincome'
+  // Only two views: 'products' and 'myproducts'
+  let currentView = 'products';
 
   // User investments
   let myInvestments = [];
@@ -58,20 +59,11 @@ export async function renderProduct() {
     myInvestments = res;
   } catch (e) { myInvestments = []; }
 
-  // Income transactions
-  let incomeTransactions = [];
-  let totalIncome = 0;
-  try {
-    const res = await apiCall('/transactions');
-    incomeTransactions = res.filter(t => t.type === 'product_income');
-    totalIncome = incomeTransactions.reduce((sum, t) => sum + t.amount, 0);
-  } catch (e) { incomeTransactions = []; }
-
   function renderView() {
     let content = '';
 
     if (currentView === 'products') {
-      // ---- All Products view (unchanged) ----
+      // ---- All Products view ----
       content = `
         <div style="margin-top:12px;">
           ${allProducts.map(p => `
@@ -106,14 +98,13 @@ export async function renderProduct() {
         `;
       }
     } else if (currentView === 'myproducts') {
-      // ---- My Products view with countdown timer ----
+      // ---- My Products view (shows investments + income details) ----
       if (myInvestments.length === 0) {
         content = `<div class="card" style="text-align:center; padding:20px; color:#b0baca;">You haven't purchased any product yet.</div>`;
       } else {
         content = `
           <div style="margin-top:12px;" id="my-products-container">
             ${myInvestments.map((inv, idx) => {
-              // Calculate remaining time
               const lastIncome = inv.lastIncomeDate || inv.purchasedAt || new Date().toISOString();
               const remaining = getTimeRemaining(lastIncome);
               const timeStr = remaining.done ? 'Processing...' : formatTime(remaining.hours, remaining.minutes, remaining.seconds);
@@ -137,29 +128,6 @@ export async function renderProduct() {
           </div>
         `;
       }
-    } else if (currentView === 'myincome') {
-      // ---- My Income view (unchanged) ----
-      content = `
-        <div style="margin-top:12px;">
-          <div class="card" style="background:#0a0e17; text-align:center; padding:16px;">
-            <p style="color:#b0baca;">Product income is settled every 24 hours</p>
-            <p style="color:#b0baca;">You can purchase multiple devices to increase your income</p>
-            <p style="font-size:24px; font-weight:700; color:#FF6B00; margin:8px 0;">RWF ${totalIncome.toFixed(2)}</p>
-            <p style="color:#b0baca;">Total Income</p>
-          </div>
-          ${incomeTransactions.length === 0 ? `
-            <div class="card" style="text-align:center; color:#b0baca; padding:20px;">No income yet.</div>
-          ` : incomeTransactions.map(t => `
-            <div class="product-card" style="padding:12px; background:#141c2b; border-radius:12px; margin-bottom:8px; border:1px solid #1e2838; display:flex; justify-content:space-between; align-items:center;">
-              <div>
-                <p style="color:#b0baca; font-size:14px;">${t.description || 'Income'}</p>
-                <p style="color:#6a7488; font-size:12px;">${new Date(t.createdAt).toLocaleString()}</p>
-              </div>
-              <p style="color:#4caf50; font-weight:600; font-size:16px;">+RWF ${t.amount.toFixed(2)}</p>
-            </div>
-          `).join('')}
-        </div>
-      `;
     }
 
     app.innerHTML = `
@@ -173,22 +141,18 @@ export async function renderProduct() {
           <button id="view-myproducts" style="background:none; border:none; color:${currentView === 'myproducts' ? '#FF6B00' : '#6a7488'}; font-size:15px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:4px;">
             My product <i class="fas fa-chevron-right" style="font-size:12px;"></i>
           </button>
-          <button id="view-myincome" style="background:none; border:none; color:${currentView === 'myincome' ? '#FF6B00' : '#6a7488'}; font-size:15px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:4px;">
-            My income <i class="fas fa-chevron-right" style="font-size:12px;"></i>
-          </button>
         </div>
 
         ${content}
       </div>
     `;
 
-    // ---- Start timer interval if we are in myproducts view ----
+    // ---- Start timer interval if in myproducts view ----
     if (currentView === 'myproducts' && myInvestments.length > 0) {
       if (timerInterval) clearInterval(timerInterval);
       timerInterval = setInterval(() => {
         const containers = document.querySelectorAll('.timer-display');
         if (containers.length === 0) {
-          // If timers disappeared, clear interval
           clearInterval(timerInterval);
           timerInterval = null;
           return;
@@ -203,14 +167,13 @@ export async function renderProduct() {
         });
       }, 1000);
     } else {
-      // Stop timer if not on myproducts
       if (timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
       }
     }
 
-    // ---- Event listeners (unchanged) ----
+    // ---- Event listeners ----
     document.getElementById('view-products').addEventListener('click', () => {
       currentView = 'products';
       renderView();
@@ -219,11 +182,8 @@ export async function renderProduct() {
       currentView = 'myproducts';
       renderView();
     });
-    document.getElementById('view-myincome').addEventListener('click', () => {
-      currentView = 'myincome';
-      renderView();
-    });
 
+    // Buy buttons (only in "All Products" view)
     document.querySelectorAll('.product-buy').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         const productId = e.target.dataset.id;
@@ -245,6 +205,7 @@ export async function renderProduct() {
       });
     });
 
+    // Admin add product
     const addBtn = document.getElementById('prod-add');
     if (addBtn) {
       addBtn.addEventListener('click', async () => {
