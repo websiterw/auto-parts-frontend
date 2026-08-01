@@ -143,6 +143,7 @@
         <button class="tab-btn" data-tab="transactions">Transactions</button>
         <button class="tab-btn" data-tab="withdrawals">Withdrawals</button>
         <button class="tab-btn" data-tab="recharges">Recharges</button>
+        <button class="tab-btn" data-tab="investments">Investments</button> <!-- NEW -->
         <button class="tab-btn" data-tab="settings">Settings</button>
       </div>
       <div id="tab-content">
@@ -150,6 +151,7 @@
         <div class="tab-pane" id="pane-transactions">Loading transactions...</div>
         <div class="tab-pane" id="pane-withdrawals">Loading withdrawals...</div>
         <div class="tab-pane" id="pane-recharges">Loading recharges...</div>
+        <div class="tab-pane" id="pane-investments">Loading investments...</div> <!-- NEW -->
         <div class="tab-pane" id="pane-settings">Loading settings...</div>
       </div>
     `;
@@ -165,6 +167,7 @@
         else if (tab === 'transactions') loadTransactions();
         else if (tab === 'withdrawals') loadWithdrawals();
         else if (tab === 'recharges') loadRecharges();
+        else if (tab === 'investments') loadInvestments();
         else if (tab === 'settings') loadSettings();
       });
     });
@@ -173,139 +176,125 @@
   }
 
   // ============================================================
-  // USERS TAB
-// ============================================================
-// ============================================================
-// USERS TAB – with working Edit & Delete + null balance fix
-// ============================================================
-let allUsers = [];
-let userEditId = null;
+  // USERS TAB (unchanged)
+  // ============================================================
+  let allUsers = [];
+  let userEditId = null;
 
-// -------- Render functions --------
-function renderUsers(users) {
-  const tableBody = document.getElementById('user-table-body');
-  if (!tableBody) return;
-  tableBody.innerHTML = users.map(u => `
-    <tr>
-      <td><strong>${u.accountNumber}</strong></td>
-      <td>${u.myReferralCode || '-'}</td>
-      <td>RWF ${(u.balance ?? 0).toFixed(2)}</td> <!-- FIX: handle null balance -->
-      <td>LV${u.level || 1}</td>
-      <td>${u.checkinDays || 0}</td>
-      <td>
-        <button class="btn btn-sm btn-outline" onclick="editUser('${u._id}')">Edit</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteUser('${u._id}')">Delete</button>
-      </td>
-    </tr>
-  `).join('');
-}
+  function renderUsers(users) {
+    const tableBody = document.getElementById('user-table-body');
+    if (!tableBody) return;
+    tableBody.innerHTML = users.map(u => `
+      <tr>
+        <td><strong>${u.accountNumber}</strong></td>
+        <td>${u.myReferralCode || '-'}</td>
+        <td>RWF ${(u.balance ?? 0).toFixed(2)}</td>
+        <td>LV${u.level || 1}</td>
+        <td>${u.checkinDays || 0}</td>
+        <td>
+          <button class="btn btn-sm btn-outline" onclick="editUser('${u._id}')">Edit</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteUser('${u._id}')">Delete</button>
+        </td>
+      </tr>
+    `).join('');
+  }
 
-function renderUsersTable(users) {
-  const container = document.getElementById('pane-users');
-  container.innerHTML = `
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">All Users (${users.length})</span>
-        <div class="search-box">
-          <input type="text" id="user-search" placeholder="Search by account number..." oninput="filterUsers()">
+  function renderUsersTable(users) {
+    const container = document.getElementById('pane-users');
+    container.innerHTML = `
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">All Users (${users.length})</span>
+          <div class="search-box">
+            <input type="text" id="user-search" placeholder="Search by account number..." oninput="filterUsers()">
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Account</th><th>Referral</th><th>Balance</th><th>Level</th><th>Check-in</th><th>Actions</th></tr></thead>
+            <tbody id="user-table-body"></tbody>
+          </table>
         </div>
       </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>Account</th><th>Referral</th><th>Balance</th><th>Level</th><th>Check-in</th><th>Actions</th></tr>
-          </thead>
-          <tbody id="user-table-body">
-            <!-- rows will be inserted here -->
-          </tbody>
-        </table>
+    `;
+    filterUsers();
+  }
+
+  function filterUsers() {
+    const input = document.getElementById('user-search');
+    if (!input) return;
+    const query = input.value.toLowerCase().trim();
+    const filtered = query === '' ? allUsers : allUsers.filter(u => u.accountNumber.toLowerCase().includes(query));
+    renderUsers(filtered);
+    const title = document.querySelector('#pane-users .card-title');
+    if (title) title.textContent = `All Users (${filtered.length})`;
+  }
+
+  async function loadUsers() {
+    const container = document.getElementById('pane-users');
+    try {
+      const users = await authFetch('/managers/users');
+      allUsers = users;
+      renderUsersTable(users);
+    } catch (err) {
+      container.innerHTML = `<div class="card text-danger">Error loading users: ${err.message}</div>`;
+    }
+  }
+
+  async function editUser(id) {
+    const user = allUsers.find(u => u._id === id);
+    if (!user) return;
+    userEditId = id;
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal">
+        <h2>Edit User</h2>
+        <div class="input-group"><label>Account</label><input id="edit-account" value="${user.accountNumber}" disabled></div>
+        <div class="input-group"><label>Balance (RWF)</label><input id="edit-balance" type="number" value="${user.balance ?? 0}" step="0.01"></div>
+        <div class="input-group"><label>Level</label><input id="edit-level" type="number" value="${user.level || 1}" min="1"></div>
+        <div class="input-group"><label>Check-in Days</label><input id="edit-checkin" type="number" value="${user.checkinDays || 0}" min="0"></div>
+        <div class="input-group"><label>New Password (leave blank)</label><input id="edit-password" type="password" placeholder="Enter new password"></div>
+        <div class="modal-actions">
+          <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+          <button class="btn" onclick="saveUserEdit()">Save</button>
+        </div>
       </div>
-    </div>
-  `;
-  // Populate with all users after building
-  filterUsers();
-}
-
-function filterUsers() {
-  const input = document.getElementById('user-search');
-  if (!input) return;
-  const query = input.value.toLowerCase().trim();
-  const filtered = query === '' ? allUsers : allUsers.filter(u => u.accountNumber.toLowerCase().includes(query));
-  renderUsers(filtered);
-  // update title count
-  const title = document.querySelector('#pane-users .card-title');
-  if (title) title.textContent = `All Users (${filtered.length})`;
-}
-
-async function loadUsers() {
-  const container = document.getElementById('pane-users');
-  try {
-    const users = await authFetch('/managers/users');
-    allUsers = users;
-    renderUsersTable(users);
-  } catch (err) {
-    container.innerHTML = `<div class="card text-danger">Error loading users: ${err.message}</div>`;
+    `;
+    document.body.appendChild(modal);
   }
-}
 
-// -------- Edit User --------
-async function editUser(id) {
-  const user = allUsers.find(u => u._id === id);
-  if (!user) return;
-  userEditId = id;
-  const modal = document.createElement('div');
-  modal.className = 'modal-overlay';
-  modal.innerHTML = `
-    <div class="modal">
-      <h2>Edit User</h2>
-      <div class="input-group"><label>Account</label><input id="edit-account" value="${user.accountNumber}" disabled></div>
-      <div class="input-group"><label>Balance (RWF)</label><input id="edit-balance" type="number" value="${user.balance ?? 0}" step="0.01"></div>
-      <div class="input-group"><label>Level</label><input id="edit-level" type="number" value="${user.level || 1}" min="1"></div>
-      <div class="input-group"><label>Check-in Days</label><input id="edit-checkin" type="number" value="${user.checkinDays || 0}" min="0"></div>
-      <div class="input-group"><label>New Password (leave blank to keep)</label><input id="edit-password" type="password" placeholder="Enter new password"></div>
-      <div class="modal-actions">
-        <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
-        <button class="btn" onclick="saveUserEdit()">Save</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(modal);
-}
-
-async function saveUserEdit() {
-  const modal = document.querySelector('.modal-overlay');
-  const balance = parseFloat(document.getElementById('edit-balance').value) || 0;
-  const level = parseInt(document.getElementById('edit-level').value) || 1;
-  const checkinDays = parseInt(document.getElementById('edit-checkin').value) || 0;
-  const password = document.getElementById('edit-password').value;
-  const payload = { balance, level, checkinDays };
-  if (password) payload.password = password;
-  try {
-    await authFetch(`/managers/users/${userEditId}`, {
-      method: 'PUT',
-      body: JSON.stringify(payload)
-    });
-    alert('User updated successfully!');
-    modal.remove();
-    loadUsers();
-  } catch (err) {
-    alert('Error: ' + err.message);
+  async function saveUserEdit() {
+    const modal = document.querySelector('.modal-overlay');
+    const balance = parseFloat(document.getElementById('edit-balance').value) || 0;
+    const level = parseInt(document.getElementById('edit-level').value) || 1;
+    const checkinDays = parseInt(document.getElementById('edit-checkin').value) || 0;
+    const password = document.getElementById('edit-password').value;
+    const payload = { balance, level, checkinDays };
+    if (password) payload.password = password;
+    try {
+      await authFetch(`/managers/users/${userEditId}`, { method: 'PUT', body: JSON.stringify(payload) });
+      alert('User updated successfully!');
+      modal.remove();
+      loadUsers();
+    } catch (err) {
+      alert('Error: ' + err.message);
+    }
   }
-}
 
-// -------- Delete User --------
-async function deleteUser(id) {
-  if (!confirm('Delete this user? This action is irreversible.')) return;
-  try {
-    await authFetch(`/managers/users/${id}`, { method: 'DELETE' });
-    alert('User deleted.');
-    loadUsers();
-  } catch (err) {
-    alert('Error: ' + err.message);
+  async function deleteUser(id) {
+    if (!confirm('Delete this user?')) return;
+    try {
+      await authFetch(`/managers/users/${id}`, { method: 'DELETE' });
+      alert('User deleted.');
+      loadUsers();
+    } catch (err) {
+      alert('Error: ' + err.message);
+    }
   }
-}
+
   // ============================================================
-  // TRANSACTIONS TAB
+  // TRANSACTIONS TAB (unchanged)
   // ============================================================
   async function loadTransactions() {
     const container = document.getElementById('pane-transactions');
@@ -365,248 +354,305 @@ async function deleteUser(id) {
     } catch (err) { alert(err.message); }
   }
 
-// ============================================================
-// WITHDRAWALS TAB – with View button for bank details
-// ============================================================
-async function loadWithdrawals() {
-  const container = document.getElementById('pane-withdrawals');
-  try {
-    const data = await authFetch('/managers/withdrawals/pending');
-    renderPendingWithdrawals(data, container);
-  } catch (err) {
-    container.innerHTML = `<div class="card text-danger">Error loading withdrawals: ${err.message}</div>`;
-  }
-}
-
-function renderPendingWithdrawals(data, container) {
-  container.innerHTML = `
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">Pending Withdrawals (${data.length})</span>
-        <button class="btn btn-danger" onclick="deleteAllWithdrawals()">Delete All</button>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>User</th>
-              <th>Amount</th>
-              <th>Bank</th>
-              <th>Date</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${data.map(w => `
-              <tr>
-                <td>${w.userId?.accountNumber || 'N/A'}</td>
-                <td>RWF ${w.amount}</td>
-                <td>
-                  <button class="btn btn-sm btn-outline" onclick="viewWithdrawal('${w._id}')">
-                    <i class="fas fa-eye"></i> View
-                  </button>
-                </td>
-                <td>${new Date(w.createdAt).toLocaleString()}</td>
-                <td>
-                  <button class="btn btn-sm btn-success" onclick="approveWithdrawal('${w._id}')">Approve</button>
-                  <button class="btn btn-sm btn-danger" onclick="rejectWithdrawal('${w._id}')">Reject</button>
-                  <button class="btn btn-sm btn-danger" onclick="deleteWithdrawal('${w._id}')">Delete</button>
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  `;
-}
-
-// -------- View Withdrawal (modal with full bank details) --------
-async function viewWithdrawal(id) {
-  try {
-    // Fetch the withdrawal record (or find it from the existing data)
-    // We can fetch it directly from the pending list, but it's safer to call the endpoint.
-    // Since we already have the data in the table, we can just find it in the DOM or re-fetch.
-    // Let's re-fetch to be sure we have the latest data.
-    const data = await authFetch('/managers/withdrawals/pending');
-    const w = data.find(item => item._id === id);
-    if (!w) {
-      alert('Withdrawal not found.');
-      return;
+  // ============================================================
+  // WITHDRAWALS TAB (unchanged)
+  // ============================================================
+  async function loadWithdrawals() {
+    const container = document.getElementById('pane-withdrawals');
+    try {
+      const data = await authFetch('/managers/withdrawals/pending');
+      renderPendingWithdrawals(data, container);
+    } catch (err) {
+      container.innerHTML = `<div class="card text-danger">Error loading withdrawals: ${err.message}</div>`;
     }
+  }
 
-    const bankDetails = w.bankDetails || {};
+  function renderPendingWithdrawals(data, container) {
+    container.innerHTML = `
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Pending Withdrawals (${data.length})</span>
+          <button class="btn btn-danger" onclick="deleteAllWithdrawals()">Delete All</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>User</th><th>Amount</th><th>Bank</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody>
+              ${data.map(w => `
+                <tr>
+                  <td>${w.userId?.accountNumber || 'N/A'}</td>
+                  <td>RWF ${w.amount}</td>
+                  <td><button class="btn btn-sm btn-outline" onclick="viewWithdrawal('${w._id}')"><i class="fas fa-eye"></i> View</button></td>
+                  <td>${new Date(w.createdAt).toLocaleString()}</td>
+                  <td>
+                    <button class="btn btn-sm btn-success" onclick="approveWithdrawal('${w._id}')">Approve</button>
+                    <button class="btn btn-sm btn-danger" onclick="rejectWithdrawal('${w._id}')">Reject</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteWithdrawal('${w._id}')">Delete</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  async function viewWithdrawal(id) {
+    try {
+      const data = await authFetch('/managers/withdrawals/pending');
+      const w = data.find(item => item._id === id);
+      if (!w) { alert('Withdrawal not found.'); return; }
+      const bankDetails = w.bankDetails || {};
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal">
+          <h2>Withdrawal Bank Details</h2>
+          <div><strong>User:</strong> ${w.userId?.accountNumber || 'N/A'}</div>
+          <div><strong>Amount:</strong> RWF ${w.amount}</div>
+          <div><strong>Bank Name:</strong> ${bankDetails.bank || 'N/A'}</div>
+          <div><strong>Account Holder:</strong> ${bankDetails.accountName || 'N/A'}</div>
+          <div><strong>Account Number:</strong> ${bankDetails.accountNumber || 'N/A'}</div>
+          <div><strong>Requested:</strong> ${new Date(w.createdAt).toLocaleString()}</div>
+          <div class="modal-actions"><button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Close</button></div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    } catch (err) {
+      alert('Error loading withdrawal details: ' + err.message);
+    }
+  }
+
+  async function approveWithdrawal(id) {
+    if (!confirm('Approve?')) return;
+    try { await authFetch(`/managers/withdrawals/${id}/approve`, { method: 'POST' }); alert('Approved'); loadWithdrawals(); } catch (err) { alert(err.message); }
+  }
+  async function rejectWithdrawal(id) {
+    if (!confirm('Reject?')) return;
+    try { await authFetch(`/managers/withdrawals/${id}/reject`, { method: 'POST' }); alert('Rejected'); loadWithdrawals(); } catch (err) { alert(err.message); }
+  }
+  async function deleteWithdrawal(id) {
+    if (!confirm('Delete this withdrawal record?')) return;
+    try { await authFetch(`/managers/withdrawals/${id}`, { method: 'DELETE' }); alert('Deleted'); loadWithdrawals(); } catch (err) { alert(err.message); }
+  }
+  async function deleteAllWithdrawals() {
+    if (!confirm('⚠️ Delete ALL withdrawal records?')) return;
+    try { const result = await authFetch('/managers/withdrawals/all', { method: 'DELETE' }); alert(result.msg || 'All withdrawal records deleted.'); loadWithdrawals(); } catch (err) { alert(err.message); }
+  }
+
+  // ============================================================
+  // RECHARGES TAB (unchanged)
+  // ============================================================
+  async function loadRecharges() {
+    const container = document.getElementById('pane-recharges');
+    try {
+      const data = await authFetch('/managers/recharges/pending');
+      renderPendingRecharges(data, container);
+    } catch (err) {
+      container.innerHTML = `<div class="card text-danger">Error loading recharges: ${err.message}</div>`;
+    }
+  }
+
+  function renderPendingRecharges(data, container) {
+    container.innerHTML = `
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Pending Recharges (${data.length})</span>
+          <button class="btn btn-danger" onclick="deleteAllRecharges()">Delete All</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>User</th><th>Amount</th><th>Method</th><th>Payment Account</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody>
+              ${data.map(r => `
+                <tr>
+                  <td>${r.userId?.accountNumber || 'N/A'}</td>
+                  <td>RWF ${r.amount}</td>
+                  <td>${r.method}</td>
+                  <td><button class="btn btn-sm btn-outline" onclick="viewRecharge('${r._id}')"><i class="fas fa-eye"></i> View</button></td>
+                  <td>${new Date(r.createdAt).toLocaleString()}</td>
+                  <td>
+                    <button class="btn btn-sm btn-success" onclick="approveRecharge('${r._id}')">Approve</button>
+                    <button class="btn btn-sm btn-danger" onclick="rejectRecharge('${r._id}')">Reject</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteRecharge('${r._id}')">Delete</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  async function viewRecharge(id) {
+    try {
+      const data = await authFetch('/managers/recharges/pending');
+      const r = data.find(item => item._id === id);
+      if (!r) { alert('Recharge not found.'); return; }
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal">
+          <h2>Recharge Details</h2>
+          <div><strong>User:</strong> ${r.userId?.accountNumber || 'N/A'}</div>
+          <div><strong>Amount:</strong> RWF ${r.amount}</div>
+          <div><strong>Method:</strong> ${r.method}</div>
+          <div><strong>Payment Account:</strong> ${r.account || 'Not provided'}</div>
+          <div><strong>Requested:</strong> ${new Date(r.createdAt).toLocaleString()}</div>
+          <div class="modal-actions"><button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Close</button></div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    } catch (err) {
+      alert('Error loading recharge details: ' + err.message);
+    }
+  }
+
+  async function approveRecharge(id) {
+    if (!confirm('Approve?')) return;
+    try { await authFetch(`/managers/recharges/${id}/approve`, { method: 'POST' }); alert('Approved'); loadRecharges(); } catch (err) { alert(err.message); }
+  }
+  async function rejectRecharge(id) {
+    if (!confirm('Reject?')) return;
+    try { await authFetch(`/managers/recharges/${id}/reject`, { method: 'POST' }); alert('Rejected'); loadRecharges(); } catch (err) { alert(err.message); }
+  }
+  async function deleteRecharge(id) {
+    if (!confirm('Delete this recharge record?')) return;
+    try { await authFetch(`/managers/recharges/${id}`, { method: 'DELETE' }); alert('Deleted'); loadRecharges(); } catch (err) { alert(err.message); }
+  }
+  async function deleteAllRecharges() {
+    if (!confirm('⚠️ Delete ALL recharge records?')) return;
+    try { const result = await authFetch('/managers/recharges/all', { method: 'DELETE' }); alert(result.msg || 'All recharge records deleted.'); loadRecharges(); } catch (err) { alert(err.message); }
+  }
+
+  // ============================================================
+  // INVESTMENTS TAB (NEW)
+  // ============================================================
+  let allInvestments = [];
+
+  async function loadInvestments() {
+    const container = document.getElementById('pane-investments');
+    try {
+      const data = await authFetch('/managers/investments');
+      allInvestments = data;
+      renderInvestments(data);
+    } catch (err) {
+      container.innerHTML = `<div class="card text-danger">Error loading investments: ${err.message}</div>`;
+    }
+  }
+
+  function renderInvestments(investments) {
+    const container = document.getElementById('pane-investments');
+    container.innerHTML = `
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Active Investments (${investments.length})</span>
+          <div class="search-box">
+            <input type="text" id="invest-search" placeholder="Search by user or product..." oninput="filterInvestments()">
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>User</th><th>Product</th><th>Price</th><th>Daily Income</th><th>Days Left</th><th>Received</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="invest-table-body">
+              ${investments.map(inv => `
+                <tr>
+                  <td>${inv.userId?.accountNumber || 'N/A'}</td>
+                  <td>${inv.productName}</td>
+                  <td>RWF ${inv.price}</td>
+                  <td>RWF ${inv.dailyIncome}</td>
+                  <td>${inv.daysRemaining}</td>
+                  <td>RWF ${inv.totalReceived || 0}</td>
+                  <td>
+                    <button class="btn btn-sm btn-outline" onclick="editInvestment('${inv._id}')">Edit</button>
+                    <button class="btn btn-sm btn-success" onclick="addIncomeNow('${inv._id}')">+ Income</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  function filterInvestments() {
+    const input = document.getElementById('invest-search');
+    if (!input) return;
+    const query = input.value.toLowerCase().trim();
+    const filtered = query === '' ? allInvestments : allInvestments.filter(inv =>
+      inv.userId?.accountNumber?.toLowerCase().includes(query) ||
+      inv.productName?.toLowerCase().includes(query)
+    );
+    renderInvestments(filtered);
+  }
+
+  async function editInvestment(id) {
+    const inv = allInvestments.find(i => i._id === id);
+    if (!inv) return;
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
     modal.innerHTML = `
       <div class="modal">
-        <h2>Withdrawal Bank Details</h2>
-        <div style="margin-bottom:8px;">
-          <strong>User:</strong> ${w.userId?.accountNumber || 'N/A'}
-        </div>
-        <div style="margin-bottom:8px;">
-          <strong>Amount:</strong> RWF ${w.amount}
-        </div>
-        <div style="margin-bottom:8px;">
-          <strong>Bank Name:</strong> ${bankDetails.bank || 'N/A'}
-        </div>
-        <div style="margin-bottom:8px;">
-          <strong>Account Holder:</strong> ${bankDetails.accountName || 'N/A'}
-        </div>
-        <div style="margin-bottom:8px;">
-          <strong>Account Number:</strong> ${bankDetails.accountNumber || 'N/A'}
-        </div>
-        <div style="margin-bottom:8px;">
-          <strong>Requested:</strong> ${new Date(w.createdAt).toLocaleString()}
+        <h2>Edit Investment</h2>
+        <div class="input-group"><label>User</label><input value="${inv.userId?.accountNumber || 'N/A'}" disabled></div>
+        <div class="input-group"><label>Product</label><input value="${inv.productName}" disabled></div>
+        <div class="input-group"><label>Price</label><input value="${inv.price}" disabled></div>
+        <div class="input-group"><label>Daily Income (RWF)</label><input id="edit-daily" type="number" value="${inv.dailyIncome}" step="0.01"></div>
+        <div class="input-group"><label>Days Remaining</label><input id="edit-days" type="number" value="${inv.daysRemaining}" min="0"></div>
+        <div class="input-group"><label>Active</label>
+          <select id="edit-active">
+            <option value="true" ${inv.isActive ? 'selected' : ''}>Yes</option>
+            <option value="false" ${!inv.isActive ? 'selected' : ''}>No</option>
+          </select>
         </div>
         <div class="modal-actions">
-          <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Close</button>
+          <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+          <button class="btn" onclick="saveInvestmentEdit('${id}')">Save</button>
         </div>
       </div>
     `;
     document.body.appendChild(modal);
-  } catch (err) {
-    alert('Error loading withdrawal details: ' + err.message);
   }
-}
 
-// -------- Existing action functions (unchanged) --------
-async function approveWithdrawal(id) {
-  if (!confirm('Approve?')) return;
-  try { await authFetch(`/managers/withdrawals/${id}/approve`, { method: 'POST' }); alert('Approved'); loadWithdrawals(); } catch (err) { alert(err.message); }
-}
-async function rejectWithdrawal(id) {
-  if (!confirm('Reject?')) return;
-  try { await authFetch(`/managers/withdrawals/${id}/reject`, { method: 'POST' }); alert('Rejected'); loadWithdrawals(); } catch (err) { alert(err.message); }
-}
-async function deleteWithdrawal(id) {
-  if (!confirm('Delete this withdrawal record?')) return;
-  try { await authFetch(`/managers/withdrawals/${id}`, { method: 'DELETE' }); alert('Deleted'); loadWithdrawals(); } catch (err) { alert(err.message); }
-}
-async function deleteAllWithdrawals() {
-  if (!confirm('⚠️ Delete ALL withdrawal records?')) return;
-  try { const result = await authFetch('/managers/withdrawals/all', { method: 'DELETE' }); alert(result.msg || 'All withdrawal records deleted.'); loadWithdrawals(); } catch (err) { alert(err.message); }
-}
-  // ============================================================
- // ============================================================
-// RECHARGES TAB – with View button for payment account
-// ============================================================
-async function loadRecharges() {
-  const container = document.getElementById('pane-recharges');
-  try {
-    const data = await authFetch('/managers/recharges/pending');
-    renderPendingRecharges(data, container);
-  } catch (err) {
-    container.innerHTML = `<div class="card text-danger">Error loading recharges: ${err.message}</div>`;
-  }
-}
-
-function renderPendingRecharges(data, container) {
-  container.innerHTML = `
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">Pending Recharges (${data.length})</span>
-        <button class="btn btn-danger" onclick="deleteAllRecharges()">Delete All</button>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>User</th>
-              <th>Amount</th>
-              <th>Method</th>
-              <th>Payment Account</th>
-              <th>Date</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${data.map(r => `
-              <tr>
-                <td>${r.userId?.accountNumber || 'N/A'}</td>
-                <td>RWF ${r.amount}</td>
-                <td>${r.method}</td>
-                <td>
-                  <button class="btn btn-sm btn-outline" onclick="viewRecharge('${r._id}')">
-                    <i class="fas fa-eye"></i> View
-                  </button>
-                </td>
-                <td>${new Date(r.createdAt).toLocaleString()}</td>
-                <td>
-                  <button class="btn btn-sm btn-success" onclick="approveRecharge('${r._id}')">Approve</button>
-                  <button class="btn btn-sm btn-danger" onclick="rejectRecharge('${r._id}')">Reject</button>
-                  <button class="btn btn-sm btn-danger" onclick="deleteRecharge('${r._id}')">Delete</button>
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  `;
-}
-
-// -------- View Recharge (modal with full details) --------
-async function viewRecharge(id) {
-  try {
-    const data = await authFetch('/managers/recharges/pending');
-    const r = data.find(item => item._id === id);
-    if (!r) {
-      alert('Recharge not found.');
-      return;
+  async function saveInvestmentEdit(id) {
+    const dailyIncome = parseFloat(document.getElementById('edit-daily').value);
+    const daysRemaining = parseInt(document.getElementById('edit-days').value);
+    const isActive = document.getElementById('edit-active').value === 'true';
+    const payload = { dailyIncome, daysRemaining, isActive };
+    try {
+      await authFetch(`/managers/investments/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+      alert('Investment updated!');
+      document.querySelector('.modal-overlay')?.remove();
+      loadInvestments();
+    } catch (err) {
+      alert('Error: ' + err.message);
     }
-
-    const modal = document.createElement('div');
-    modal.className = 'modal-overlay';
-    modal.innerHTML = `
-      <div class="modal">
-        <h2>Recharge Details</h2>
-        <div style="margin-bottom:8px;">
-          <strong>User:</strong> ${r.userId?.accountNumber || 'N/A'}
-        </div>
-        <div style="margin-bottom:8px;">
-          <strong>Amount:</strong> RWF ${r.amount}
-        </div>
-        <div style="margin-bottom:8px;">
-          <strong>Method:</strong> ${r.method}
-        </div>
-        <div style="margin-bottom:8px;">
-          <strong>Payment Account:</strong> ${r.account || 'Not provided'}
-        </div>
-        <div style="margin-bottom:8px;">
-          <strong>Requested:</strong> ${new Date(r.createdAt).toLocaleString()}
-        </div>
-        <div class="modal-actions">
-          <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Close</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-  } catch (err) {
-    alert('Error loading recharge details: ' + err.message);
   }
-}
 
-// -------- Existing action functions (unchanged) --------
-async function approveRecharge(id) {
-  if (!confirm('Approve?')) return;
-  try { await authFetch(`/managers/recharges/${id}/approve`, { method: 'POST' }); alert('Approved'); loadRecharges(); } catch (err) { alert(err.message); }
-}
-async function rejectRecharge(id) {
-  if (!confirm('Reject?')) return;
-  try { await authFetch(`/managers/recharges/${id}/reject`, { method: 'POST' }); alert('Rejected'); loadRecharges(); } catch (err) { alert(err.message); }
-}
-async function deleteRecharge(id) {
-  if (!confirm('Delete this recharge record?')) return;
-  try { await authFetch(`/managers/recharges/${id}`, { method: 'DELETE' }); alert('Deleted'); loadRecharges(); } catch (err) { alert(err.message); }
-}
-async function deleteAllRecharges() {
-  if (!confirm('⚠️ Delete ALL recharge records?')) return;
-  try { const result = await authFetch('/managers/recharges/all', { method: 'DELETE' }); alert(result.msg || 'All recharge records deleted.'); loadRecharges(); } catch (err) { alert(err.message); }
-}
+  async function addIncomeNow(id) {
+    if (!confirm('Add one daily income to the user\'s balance for this investment?')) return;
+    try {
+      await authFetch(`/managers/investments/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ addIncomeNow: true })
+      });
+      alert('Income added!');
+      loadInvestments();
+    } catch (err) {
+      alert('Error: ' + err.message);
+    }
+  }
 
   // ============================================================
-  // SETTINGS TAB – FIXED
+  // SETTINGS TAB (unchanged)
   // ============================================================
   async function loadSettings() {
     const container = document.getElementById('pane-settings');
@@ -622,56 +668,25 @@ async function deleteAllRecharges() {
 
   function renderSettings(settings, giftCodes, container) {
     container.innerHTML = `
-      <!-- Platform Settings -->
       <div class="card">
         <h3>Platform Settings</h3>
-        <div class="input-group">
-          <label>MTN Account Number</label>
-          <input type="text" id="mtn-account" value="${settings.mtnAccount || '0792702997'}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
-        </div>
-        <div class="input-group">
-          <label>MTN Account Name</label>
-          <input type="text" id="mtn-name" value="${settings.mtnName || 'ARSENE BAYIRINGIRE'}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
-        </div>
-        <div class="input-group">
-          <label>Airtel Account Number</label>
-          <input type="text" id="airtel-account" value="${settings.airtelAccount || '0737217328'}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
-        </div>
-        <div class="input-group">
-          <label>Airtel Account Name</label>
-          <input type="text" id="airtel-name" value="${settings.airtelName || 'Arsene BAYIRINGIRE'}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
-        </div>
-        <div class="input-group">
-          <label>Minimum Withdrawal (RWF)</label>
-          <input type="number" id="min-withdrawal" value="${settings.minWithdrawal || 3000}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
-        </div>
-        <div class="input-group">
-          <label>Withdrawal Fee (%)</label>
-          <input type="number" id="withdrawal-fee" value="${settings.withdrawalFee || 20}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
-        </div>
+        <div class="input-group"><label>MTN Account Number</label><input type="text" id="mtn-account" value="${settings.mtnAccount || '0792702997'}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;"></div>
+        <div class="input-group"><label>MTN Account Name</label><input type="text" id="mtn-name" value="${settings.mtnName || 'ARSENE BAYIRINGIRE'}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;"></div>
+        <div class="input-group"><label>Airtel Account Number</label><input type="text" id="airtel-account" value="${settings.airtelAccount || '0737217328'}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;"></div>
+        <div class="input-group"><label>Airtel Account Name</label><input type="text" id="airtel-name" value="${settings.airtelName || 'Arsene BAYIRINGIRE'}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;"></div>
+        <div class="input-group"><label>Minimum Withdrawal (RWF)</label><input type="number" id="min-withdrawal" value="${settings.minWithdrawal || 3000}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;"></div>
+        <div class="input-group"><label>Withdrawal Fee (%)</label><input type="number" id="withdrawal-fee" value="${settings.withdrawalFee || 20}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;"></div>
         <button class="btn" onclick="saveSettings()">Save Settings</button>
       </div>
-
-      <!-- Gift Codes -->
       <div class="card">
         <h3>Create Gift Code</h3>
         <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
-          <div style="flex:2; min-width:120px;">
-            <label style="font-size:13px; color:#b0baca;">Code</label>
-            <input type="text" id="gift-code" placeholder="e.g. bjjhgbnuj" style="width:100%; padding:8px; border-radius:8px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
-          </div>
-          <div style="flex:1; min-width:80px;">
-            <label style="font-size:13px; color:#b0baca;">Min Amount (RWF)</label>
-            <input type="number" id="gift-min" value="1000" style="width:100%; padding:8px; border-radius:8px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
-          </div>
-          <div style="flex:1; min-width:80px;">
-            <label style="font-size:13px; color:#b0baca;">Max Amount (RWF)</label>
-            <input type="number" id="gift-max" value="5000" style="width:100%; padding:8px; border-radius:8px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
-          </div>
+          <div style="flex:2; min-width:120px;"><label style="font-size:13px; color:#b0baca;">Code</label><input type="text" id="gift-code" placeholder="e.g. bjjhgbnuj" style="width:100%; padding:8px; border-radius:8px; border:1px solid #2a3040; background:#0a0e17; color:#fff;"></div>
+          <div style="flex:1; min-width:80px;"><label style="font-size:13px; color:#b0baca;">Min Amount (RWF)</label><input type="number" id="gift-min" value="1000" style="width:100%; padding:8px; border-radius:8px; border:1px solid #2a3040; background:#0a0e17; color:#fff;"></div>
+          <div style="flex:1; min-width:80px;"><label style="font-size:13px; color:#b0baca;">Max Amount (RWF)</label><input type="number" id="gift-max" value="5000" style="width:100%; padding:8px; border-radius:8px; border:1px solid #2a3040; background:#0a0e17; color:#fff;"></div>
         </div>
         <button class="btn" onclick="createGiftCode()">Create Gift Code</button>
       </div>
-
       <div class="card">
         <div class="card-header">
           <span class="card-title">Existing Gift Codes (${giftCodes.length})</span>
@@ -688,9 +703,7 @@ async function deleteAllRecharges() {
                     <td>RWF ${g.minAmount || 0}</td>
                     <td>RWF ${g.maxAmount || 0}</td>
                     <td><span class="badge ${g.isActive ? 'badge-success' : 'badge-danger'}">${g.isActive ? 'Active' : 'Used'}</span></td>
-                    <td>
-                      <button class="btn btn-sm btn-danger" onclick="deleteGiftCode('${g._id}')">Delete</button>
-                    </td>
+                    <td><button class="btn btn-sm btn-danger" onclick="deleteGiftCode('${g._id}')">Delete</button></td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -698,8 +711,6 @@ async function deleteAllRecharges() {
           </div>
         `}
       </div>
-
-      <!-- Change Admin Password -->
       <div class="card">
         <h3>Change Admin Password</h3>
         <div class="input-group"><label>Current Password</label><input id="admin-current-pwd" type="password"></div>
@@ -711,7 +722,7 @@ async function deleteAllRecharges() {
   }
 
   // ============================================================
-  // SETTINGS ACTIONS
+  // SETTINGS ACTIONS (unchanged)
   // ============================================================
   async function saveSettings() {
     const payload = {
