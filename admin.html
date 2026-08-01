@@ -528,7 +528,7 @@
   }
 
 // ============================================================
-// INVESTMENTS TAB (with search, edit, delete, +income)
+// INVESTMENTS TAB – with working search (matches any part of account number)
 // ============================================================
 let allInvestments = [];
 
@@ -550,7 +550,7 @@ function renderInvestments(investments) {
       <div class="card-header">
         <span class="card-title">Active Investments (${investments.length})</span>
         <div class="search-box">
-          <input type="text" id="invest-search" placeholder="Search by user account..." oninput="filterInvestments()">
+          <input type="text" id="invest-search" placeholder="Search by user or product..." oninput="filterInvestments()">
         </div>
       </div>
       <div class="table-wrap">
@@ -568,7 +568,9 @@ function renderInvestments(investments) {
             </tr>
           </thead>
           <tbody id="invest-table-body">
-            ${investments.map(inv => `
+            ${investments.length === 0 ? `
+              <tr><td colspan="8" style="text-align:center; color:#b0baca; padding:20px;">No matching investments.</td></tr>
+            ` : investments.map(inv => `
               <tr>
                 <td>${inv.userId?.accountNumber || 'N/A'}</td>
                 <td>${inv.productName}</td>
@@ -595,11 +597,20 @@ function filterInvestments() {
   const input = document.getElementById('invest-search');
   if (!input) return;
   const query = input.value.toLowerCase().trim();
-  const filtered = query === '' ? allInvestments : allInvestments.filter(inv => {
+  
+  // If empty, show all
+  if (query === '') {
+    renderInvestments(allInvestments);
+    return;
+  }
+  
+  // Filter by account number (partial match) OR product name
+  const filtered = allInvestments.filter(inv => {
     const account = (inv.userId?.accountNumber || '').toLowerCase();
     const product = (inv.productName || '').toLowerCase();
     return account.includes(query) || product.includes(query);
   });
+  
   renderInvestments(filtered);
 }
 
@@ -650,7 +661,7 @@ async function saveInvestmentEdit(id) {
   }
 }
 
-// -------- Manually add income --------
+// -------- Manually add income (decreases days, updates received) --------
 async function addIncomeNow(id) {
   if (!confirm('Add one daily income to the user\'s balance for this investment?')) return;
   try {
@@ -676,76 +687,6 @@ async function deleteInvestment(id) {
     alert('Error: ' + err.message);
   }
 }
-  // ============================================================
-  // SETTINGS TAB (unchanged)
-  // ============================================================
-  async function loadSettings() {
-    const container = document.getElementById('pane-settings');
-    try {
-      const settings = await authFetch('/managers/settings');
-      const giftCodes = await authFetch('/managers/giftcodes');
-      renderSettings(settings, giftCodes, container);
-    } catch (err) {
-      console.error('Settings error:', err);
-      container.innerHTML = `<div class="card text-danger">Error loading settings: ${err.message}</div>`;
-    }
-  }
-
-  function renderSettings(settings, giftCodes, container) {
-    container.innerHTML = `
-      <div class="card">
-        <h3>Platform Settings</h3>
-        <div class="input-group"><label>MTN Account Number</label><input type="text" id="mtn-account" value="${settings.mtnAccount || '0792702997'}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;"></div>
-        <div class="input-group"><label>MTN Account Name</label><input type="text" id="mtn-name" value="${settings.mtnName || 'ARSENE BAYIRINGIRE'}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;"></div>
-        <div class="input-group"><label>Airtel Account Number</label><input type="text" id="airtel-account" value="${settings.airtelAccount || '0737217328'}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;"></div>
-        <div class="input-group"><label>Airtel Account Name</label><input type="text" id="airtel-name" value="${settings.airtelName || 'Arsene BAYIRINGIRE'}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;"></div>
-        <div class="input-group"><label>Minimum Withdrawal (RWF)</label><input type="number" id="min-withdrawal" value="${settings.minWithdrawal || 3000}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;"></div>
-        <div class="input-group"><label>Withdrawal Fee (%)</label><input type="number" id="withdrawal-fee" value="${settings.withdrawalFee || 20}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;"></div>
-        <button class="btn" onclick="saveSettings()">Save Settings</button>
-      </div>
-      <div class="card">
-        <h3>Create Gift Code</h3>
-        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
-          <div style="flex:2; min-width:120px;"><label style="font-size:13px; color:#b0baca;">Code</label><input type="text" id="gift-code" placeholder="e.g. bjjhgbnuj" style="width:100%; padding:8px; border-radius:8px; border:1px solid #2a3040; background:#0a0e17; color:#fff;"></div>
-          <div style="flex:1; min-width:80px;"><label style="font-size:13px; color:#b0baca;">Min Amount (RWF)</label><input type="number" id="gift-min" value="1000" style="width:100%; padding:8px; border-radius:8px; border:1px solid #2a3040; background:#0a0e17; color:#fff;"></div>
-          <div style="flex:1; min-width:80px;"><label style="font-size:13px; color:#b0baca;">Max Amount (RWF)</label><input type="number" id="gift-max" value="5000" style="width:100%; padding:8px; border-radius:8px; border:1px solid #2a3040; background:#0a0e17; color:#fff;"></div>
-        </div>
-        <button class="btn" onclick="createGiftCode()">Create Gift Code</button>
-      </div>
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">Existing Gift Codes (${giftCodes.length})</span>
-          <button class="btn btn-danger" onclick="deleteAllGiftCodes()">Delete All</button>
-        </div>
-        ${giftCodes.length === 0 ? '<p style="color:#b0baca;">No gift codes created yet.</p>' : `
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Code</th><th>Min</th><th>Max</th><th>Status</th><th>Actions</th></tr></thead>
-              <tbody>
-                ${giftCodes.map(g => `
-                  <tr>
-                    <td><strong>${g.code}</strong></td>
-                    <td>RWF ${g.minAmount || 0}</td>
-                    <td>RWF ${g.maxAmount || 0}</td>
-                    <td><span class="badge ${g.isActive ? 'badge-success' : 'badge-danger'}">${g.isActive ? 'Active' : 'Used'}</span></td>
-                    <td><button class="btn btn-sm btn-danger" onclick="deleteGiftCode('${g._id}')">Delete</button></td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-        `}
-      </div>
-      <div class="card">
-        <h3>Change Admin Password</h3>
-        <div class="input-group"><label>Current Password</label><input id="admin-current-pwd" type="password"></div>
-        <div class="input-group"><label>New Password</label><input id="admin-new-pwd" type="password"></div>
-        <div class="input-group"><label>Confirm New Password</label><input id="admin-confirm-pwd" type="password"></div>
-        <button class="btn" onclick="changeAdminPassword()">Update Password</button>
-      </div>
-    `;
-  }
-
   // ============================================================
   // SETTINGS ACTIONS (unchanged)
   // ============================================================
