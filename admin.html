@@ -527,130 +527,154 @@
     try { const result = await authFetch('/managers/recharges/all', { method: 'DELETE' }); alert(result.msg || 'All recharge records deleted.'); loadRecharges(); } catch (err) { alert(err.message); }
   }
 
-  // ============================================================
-  // INVESTMENTS TAB (NEW)
-  // ============================================================
-  let allInvestments = [];
+// ============================================================
+// INVESTMENTS TAB (with purchase date, delete, and income logic)
+// ============================================================
+let allInvestments = [];
 
-  async function loadInvestments() {
-    const container = document.getElementById('pane-investments');
-    try {
-      const data = await authFetch('/managers/investments');
-      allInvestments = data;
-      renderInvestments(data);
-    } catch (err) {
-      container.innerHTML = `<div class="card text-danger">Error loading investments: ${err.message}</div>`;
-    }
+async function loadInvestments() {
+  const container = document.getElementById('pane-investments');
+  try {
+    const data = await authFetch('/managers/investments');
+    allInvestments = data;
+    renderInvestments(data);
+  } catch (err) {
+    container.innerHTML = `<div class="card text-danger">Error loading investments: ${err.message}</div>`;
   }
+}
 
-  function renderInvestments(investments) {
-    const container = document.getElementById('pane-investments');
-    container.innerHTML = `
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">Active Investments (${investments.length})</span>
-          <div class="search-box">
-            <input type="text" id="invest-search" placeholder="Search by user or product..." oninput="filterInvestments()">
-          </div>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>User</th><th>Product</th><th>Price</th><th>Daily Income</th><th>Days Left</th><th>Received</th><th>Actions</th></tr>
-            </thead>
-            <tbody id="invest-table-body">
-              ${investments.map(inv => `
-                <tr>
-                  <td>${inv.userId?.accountNumber || 'N/A'}</td>
-                  <td>${inv.productName}</td>
-                  <td>RWF ${inv.price}</td>
-                  <td>RWF ${inv.dailyIncome}</td>
-                  <td>${inv.daysRemaining}</td>
-                  <td>RWF ${inv.totalReceived || 0}</td>
-                  <td>
-                    <button class="btn btn-sm btn-outline" onclick="editInvestment('${inv._id}')">Edit</button>
-                    <button class="btn btn-sm btn-success" onclick="addIncomeNow('${inv._id}')">+ Income</button>
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
+function renderInvestments(investments) {
+  const container = document.getElementById('pane-investments');
+  container.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Active Investments (${investments.length})</span>
+        <div class="search-box">
+          <input type="text" id="invest-search" placeholder="Search by user or product..." oninput="filterInvestments()">
         </div>
       </div>
-    `;
-  }
-
-  function filterInvestments() {
-    const input = document.getElementById('invest-search');
-    if (!input) return;
-    const query = input.value.toLowerCase().trim();
-    const filtered = query === '' ? allInvestments : allInvestments.filter(inv =>
-      inv.userId?.accountNumber?.toLowerCase().includes(query) ||
-      inv.productName?.toLowerCase().includes(query)
-    );
-    renderInvestments(filtered);
-  }
-
-  async function editInvestment(id) {
-    const inv = allInvestments.find(i => i._id === id);
-    if (!inv) return;
-    const modal = document.createElement('div');
-    modal.className = 'modal-overlay';
-    modal.innerHTML = `
-      <div class="modal">
-        <h2>Edit Investment</h2>
-        <div class="input-group"><label>User</label><input value="${inv.userId?.accountNumber || 'N/A'}" disabled></div>
-        <div class="input-group"><label>Product</label><input value="${inv.productName}" disabled></div>
-        <div class="input-group"><label>Price</label><input value="${inv.price}" disabled></div>
-        <div class="input-group"><label>Daily Income (RWF)</label><input id="edit-daily" type="number" value="${inv.dailyIncome}" step="0.01"></div>
-        <div class="input-group"><label>Days Remaining</label><input id="edit-days" type="number" value="${inv.daysRemaining}" min="0"></div>
-        <div class="input-group"><label>Active</label>
-          <select id="edit-active">
-            <option value="true" ${inv.isActive ? 'selected' : ''}>Yes</option>
-            <option value="false" ${!inv.isActive ? 'selected' : ''}>No</option>
-          </select>
-        </div>
-        <div class="modal-actions">
-          <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
-          <button class="btn" onclick="saveInvestmentEdit('${id}')">Save</button>
-        </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Product</th>
+              <th>Price</th>
+              <th>Daily Income</th>
+              <th>Days Left</th>
+              <th>Received</th>
+              <th>Purchased At</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="invest-table-body">
+            ${investments.map(inv => `
+              <tr>
+                <td>${inv.userId?.accountNumber || 'N/A'}</td>
+                <td>${inv.productName}</td>
+                <td>RWF ${inv.price}</td>
+                <td>RWF ${inv.dailyIncome}</td>
+                <td>${inv.daysRemaining}</td>
+                <td>RWF ${inv.totalReceived || 0}</td>
+                <td>${new Date(inv.purchasedAt).toLocaleString()}</td>
+                <td>
+                  <button class="btn btn-sm btn-outline" onclick="editInvestment('${inv._id}')">Edit</button>
+                  <button class="btn btn-sm btn-success" onclick="addIncomeNow('${inv._id}')">+ Income</button>
+                  <button class="btn btn-sm btn-danger" onclick="deleteInvestment('${inv._id}')">Delete</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
       </div>
-    `;
-    document.body.appendChild(modal);
-  }
+    </div>
+  `;
+}
 
-  async function saveInvestmentEdit(id) {
-    const dailyIncome = parseFloat(document.getElementById('edit-daily').value);
-    const daysRemaining = parseInt(document.getElementById('edit-days').value);
-    const isActive = document.getElementById('edit-active').value === 'true';
-    const payload = { dailyIncome, daysRemaining, isActive };
-    try {
-      await authFetch(`/managers/investments/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(payload)
-      });
-      alert('Investment updated!');
-      document.querySelector('.modal-overlay')?.remove();
-      loadInvestments();
-    } catch (err) {
-      alert('Error: ' + err.message);
-    }
-  }
+function filterInvestments() {
+  const input = document.getElementById('invest-search');
+  if (!input) return;
+  const query = input.value.toLowerCase().trim();
+  const filtered = query === '' ? allInvestments : allInvestments.filter(inv =>
+    inv.userId?.accountNumber?.toLowerCase().includes(query) ||
+    inv.productName?.toLowerCase().includes(query)
+  );
+  renderInvestments(filtered);
+}
 
-  async function addIncomeNow(id) {
-    if (!confirm('Add one daily income to the user\'s balance for this investment?')) return;
-    try {
-      await authFetch(`/managers/investments/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ addIncomeNow: true })
-      });
-      alert('Income added!');
-      loadInvestments();
-    } catch (err) {
-      alert('Error: ' + err.message);
-    }
-  }
+// -------- Edit Investment (modal) --------
+async function editInvestment(id) {
+  const inv = allInvestments.find(i => i._id === id);
+  if (!inv) return;
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal">
+      <h2>Edit Investment</h2>
+      <div class="input-group"><label>User</label><input value="${inv.userId?.accountNumber || 'N/A'}" disabled></div>
+      <div class="input-group"><label>Product</label><input value="${inv.productName}" disabled></div>
+      <div class="input-group"><label>Price</label><input value="${inv.price}" disabled></div>
+      <div class="input-group"><label>Daily Income (RWF)</label><input id="edit-daily" type="number" value="${inv.dailyIncome}" step="0.01"></div>
+      <div class="input-group"><label>Days Remaining</label><input id="edit-days" type="number" value="${inv.daysRemaining}" min="0"></div>
+      <div class="input-group"><label>Active</label>
+        <select id="edit-active">
+          <option value="true" ${inv.isActive ? 'selected' : ''}>Yes</option>
+          <option value="false" ${!inv.isActive ? 'selected' : ''}>No</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+        <button class="btn" onclick="saveInvestmentEdit('${id}')">Save</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
 
+async function saveInvestmentEdit(id) {
+  const dailyIncome = parseFloat(document.getElementById('edit-daily').value);
+  const daysRemaining = parseInt(document.getElementById('edit-days').value);
+  const isActive = document.getElementById('edit-active').value === 'true';
+  const payload = { dailyIncome, daysRemaining, isActive };
+  try {
+    await authFetch(`/managers/investments/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    });
+    alert('Investment updated!');
+    document.querySelector('.modal-overlay')?.remove();
+    loadInvestments();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+// -------- Manually add income (decreases days, updates received) --------
+async function addIncomeNow(id) {
+  if (!confirm('Add one daily income to the user\'s balance for this investment?')) return;
+  try {
+    await authFetch(`/managers/investments/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ addIncomeNow: true })
+    });
+    alert('Income added! Days remaining decreased.');
+    loadInvestments();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+// -------- Delete Investment --------
+async function deleteInvestment(id) {
+  if (!confirm('Delete this investment record? This action is irreversible.')) return;
+  try {
+    await authFetch(`/managers/investments/${id}`, { method: 'DELETE' });
+    alert('Investment deleted.');
+    loadInvestments();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
   // ============================================================
   // SETTINGS TAB (unchanged)
   // ============================================================
