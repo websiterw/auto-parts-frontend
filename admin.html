@@ -694,78 +694,182 @@ async function deleteInvestment(id) {
   }
 }
   // ============================================================
-  // SETTINGS ACTIONS (unchanged)
-  // ============================================================
-  async function saveSettings() {
-    const payload = {
-      mtnAccount: document.getElementById('mtn-account').value,
-      mtnName: document.getElementById('mtn-name').value,
-      airtelAccount: document.getElementById('airtel-account').value,
-      airtelName: document.getElementById('airtel-name').value,
-      minWithdrawal: parseFloat(document.getElementById('min-withdrawal').value),
-      withdrawalFee: parseFloat(document.getElementById('withdrawal-fee').value)
-    };
-    try {
-      await authFetch('/managers/settings', { method: 'PUT', body: JSON.stringify(payload) });
-      alert('Settings saved!');
-    } catch (err) { alert(err.message); }
+// ============================================================
+// SETTINGS TAB – full with load & render
+// ============================================================
+async function loadSettings() {
+  const container = document.getElementById('pane-settings');
+  try {
+    const settings = await authFetch('/managers/settings');
+    const giftCodes = await authFetch('/managers/giftcodes');
+    renderSettings(settings, giftCodes, container);
+  } catch (err) {
+    console.error('Settings error:', err);
+    container.innerHTML = `<div class="card text-danger">Error loading settings: ${err.message}</div>`;
   }
+}
 
-  async function createGiftCode() {
-    const code = document.getElementById('gift-code').value.trim();
-    const minAmount = parseFloat(document.getElementById('gift-min').value);
-    const maxAmount = parseFloat(document.getElementById('gift-max').value);
-    if (!code || isNaN(minAmount) || isNaN(maxAmount) || minAmount > maxAmount) {
-      alert('Please enter a valid code and amounts (min <= max).');
-      return;
-    }
-    try {
-      await authFetch('/managers/giftcodes', {
-        method: 'POST',
-        body: JSON.stringify({ code, minAmount, maxAmount })
-      });
-      alert('✅ Gift code created!');
-      loadSettings();
-    } catch (err) { alert('❌ Error: ' + err.message); }
-  }
+function renderSettings(settings, giftCodes, container) {
+  container.innerHTML = `
+    <!-- Platform Settings -->
+    <div class="card">
+      <h3>Platform Settings</h3>
+      <div class="input-group">
+        <label>MTN Account Number</label>
+        <input type="text" id="mtn-account" value="${settings.mtnAccount || '0792702997'}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
+      </div>
+      <div class="input-group">
+        <label>MTN Account Name</label>
+        <input type="text" id="mtn-name" value="${settings.mtnName || 'ARSENE BAYIRINGIRE'}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
+      </div>
+      <div class="input-group">
+        <label>Airtel Account Number</label>
+        <input type="text" id="airtel-account" value="${settings.airtelAccount || '0737217328'}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
+      </div>
+      <div class="input-group">
+        <label>Airtel Account Name</label>
+        <input type="text" id="airtel-name" value="${settings.airtelName || 'Arsene BAYIRINGIRE'}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
+      </div>
+      <div class="input-group">
+        <label>Minimum Withdrawal (RWF)</label>
+        <input type="number" id="min-withdrawal" value="${settings.minWithdrawal || 3000}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
+      </div>
+      <div class="input-group">
+        <label>Withdrawal Fee (%)</label>
+        <input type="number" id="withdrawal-fee" value="${settings.withdrawalFee || 20}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
+      </div>
+      <button class="btn" onclick="saveSettings()">Save Settings</button>
+    </div>
 
-  async function deleteGiftCode(id) {
-    if (!confirm('Delete this gift code?')) return;
-    try {
-      await authFetch(`/managers/giftcodes/${id}`, { method: 'DELETE' });
-      alert('Deleted');
-      loadSettings();
-    } catch (err) { alert(err.message); }
-  }
+    <!-- Gift Codes -->
+    <div class="card">
+      <h3>Create Gift Code</h3>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+        <div style="flex:2; min-width:120px;">
+          <label style="font-size:13px; color:#b0baca;">Code</label>
+          <input type="text" id="gift-code" placeholder="e.g. bjjhgbnuj" style="width:100%; padding:8px; border-radius:8px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
+        </div>
+        <div style="flex:1; min-width:80px;">
+          <label style="font-size:13px; color:#b0baca;">Min Amount (RWF)</label>
+          <input type="number" id="gift-min" value="1000" style="width:100%; padding:8px; border-radius:8px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
+        </div>
+        <div style="flex:1; min-width:80px;">
+          <label style="font-size:13px; color:#b0baca;">Max Amount (RWF)</label>
+          <input type="number" id="gift-max" value="5000" style="width:100%; padding:8px; border-radius:8px; border:1px solid #2a3040; background:#0a0e17; color:#fff;">
+        </div>
+      </div>
+      <button class="btn" onclick="createGiftCode()">Create Gift Code</button>
+    </div>
 
-  async function deleteAllGiftCodes() {
-    if (!confirm('⚠️ Delete ALL gift codes?')) return;
-    try {
-      const result = await authFetch('/managers/giftcodes/all', { method: 'DELETE' });
-      alert(result.msg || 'All gift codes deleted.');
-      loadSettings();
-    } catch (err) { alert(err.message); }
-  }
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Existing Gift Codes (${giftCodes.length})</span>
+        <button class="btn btn-danger" onclick="deleteAllGiftCodes()">Delete All</button>
+      </div>
+      ${giftCodes.length === 0 ? '<p style="color:#b0baca;">No gift codes created yet.</p>' : `
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Code</th><th>Min</th><th>Max</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+              ${giftCodes.map(g => `
+                <tr>
+                  <td><strong>${g.code}</strong></td>
+                  <td>RWF ${g.minAmount || 0}</td>
+                  <td>RWF ${g.maxAmount || 0}</td>
+                  <td><span class="badge ${g.isActive ? 'badge-success' : 'badge-danger'}">${g.isActive ? 'Active' : 'Used'}</span></td>
+                  <td>
+                    <button class="btn btn-sm btn-danger" onclick="deleteGiftCode('${g._id}')">Delete</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `}
+    </div>
 
-  async function changeAdminPassword() {
-    const current = document.getElementById('admin-current-pwd').value;
-    const newPwd = document.getElementById('admin-new-pwd').value;
-    const confirm = document.getElementById('admin-confirm-pwd').value;
-    if (!current || !newPwd || !confirm || newPwd !== confirm) {
-      alert('Please fill all fields correctly.');
-      return;
-    }
-    try {
-      await authFetch('/managers/change-password', {
-        method: 'POST',
-        body: JSON.stringify({ currentPassword: current, newPassword: newPwd })
-      });
-      alert('Password updated!');
-      document.getElementById('admin-current-pwd').value = '';
-      document.getElementById('admin-new-pwd').value = '';
-      document.getElementById('admin-confirm-pwd').value = '';
-    } catch (err) { alert(err.message); }
+    <!-- Change Admin Password -->
+    <div class="card">
+      <h3>Change Admin Password</h3>
+      <div class="input-group"><label>Current Password</label><input id="admin-current-pwd" type="password"></div>
+      <div class="input-group"><label>New Password</label><input id="admin-new-pwd" type="password"></div>
+      <div class="input-group"><label>Confirm New Password</label><input id="admin-confirm-pwd" type="password"></div>
+      <button class="btn" onclick="changeAdminPassword()">Update Password</button>
+    </div>
+  `;
+}
+
+// -------- Settings actions (already present, but keep them) --------
+async function saveSettings() {
+  const payload = {
+    mtnAccount: document.getElementById('mtn-account').value,
+    mtnName: document.getElementById('mtn-name').value,
+    airtelAccount: document.getElementById('airtel-account').value,
+    airtelName: document.getElementById('airtel-name').value,
+    minWithdrawal: parseFloat(document.getElementById('min-withdrawal').value),
+    withdrawalFee: parseFloat(document.getElementById('withdrawal-fee').value)
+  };
+  try {
+    await authFetch('/managers/settings', { method: 'PUT', body: JSON.stringify(payload) });
+    alert('Settings saved!');
+  } catch (err) { alert(err.message); }
+}
+
+async function createGiftCode() {
+  const code = document.getElementById('gift-code').value.trim();
+  const minAmount = parseFloat(document.getElementById('gift-min').value);
+  const maxAmount = parseFloat(document.getElementById('gift-max').value);
+  if (!code || isNaN(minAmount) || isNaN(maxAmount) || minAmount > maxAmount) {
+    alert('Please enter a valid code and amounts (min <= max).');
+    return;
   }
+  try {
+    await authFetch('/managers/giftcodes', {
+      method: 'POST',
+      body: JSON.stringify({ code, minAmount, maxAmount })
+    });
+    alert('✅ Gift code created!');
+    loadSettings();
+  } catch (err) { alert('❌ Error: ' + err.message); }
+}
+
+async function deleteGiftCode(id) {
+  if (!confirm('Delete this gift code?')) return;
+  try {
+    await authFetch(`/managers/giftcodes/${id}`, { method: 'DELETE' });
+    alert('Deleted');
+    loadSettings();
+  } catch (err) { alert(err.message); }
+}
+
+async function deleteAllGiftCodes() {
+  if (!confirm('⚠️ Delete ALL gift codes?')) return;
+  try {
+    const result = await authFetch('/managers/giftcodes/all', { method: 'DELETE' });
+    alert(result.msg || 'All gift codes deleted.');
+    loadSettings();
+  } catch (err) { alert(err.message); }
+}
+
+async function changeAdminPassword() {
+  const current = document.getElementById('admin-current-pwd').value;
+  const newPwd = document.getElementById('admin-new-pwd').value;
+  const confirm = document.getElementById('admin-confirm-pwd').value;
+  if (!current || !newPwd || !confirm || newPwd !== confirm) {
+    alert('Please fill all fields correctly.');
+    return;
+  }
+  try {
+    await authFetch('/managers/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword: current, newPassword: newPwd })
+    });
+    alert('Password updated!');
+    document.getElementById('admin-current-pwd').value = '';
+    document.getElementById('admin-new-pwd').value = '';
+    document.getElementById('admin-confirm-pwd').value = '';
+  } catch (err) { alert(err.message); }
+}
 
   // ============================================================
   // LOGOUT
