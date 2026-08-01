@@ -528,7 +528,7 @@
   }
 
 // ============================================================
-// INVESTMENTS TAB (with working search)
+// INVESTMENTS TAB (with search, edit, delete, +income)
 // ============================================================
 let allInvestments = [];
 
@@ -550,7 +550,7 @@ function renderInvestments(investments) {
       <div class="card-header">
         <span class="card-title">Active Investments (${investments.length})</span>
         <div class="search-box">
-          <input type="text" id="invest-search" placeholder="Search by user or product..." oninput="filterInvestments()">
+          <input type="text" id="invest-search" placeholder="Search by user account..." oninput="filterInvestments()">
         </div>
       </div>
       <div class="table-wrap">
@@ -596,14 +596,11 @@ function filterInvestments() {
   if (!input) return;
   const query = input.value.toLowerCase().trim();
   const filtered = query === '' ? allInvestments : allInvestments.filter(inv => {
-    const user = (inv.userId?.accountNumber || '').toLowerCase();
+    const account = (inv.userId?.accountNumber || '').toLowerCase();
     const product = (inv.productName || '').toLowerCase();
-    return user.includes(query) || product.includes(query);
+    return account.includes(query) || product.includes(query);
   });
   renderInvestments(filtered);
-  // update title count
-  const title = document.querySelector('#pane-investments .card-title');
-  if (title) title.textContent = `Active Investments (${filtered.length})`;
 }
 
 // -------- Edit Investment (modal) --------
