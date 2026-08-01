@@ -528,7 +528,7 @@
   }
 
 // ============================================================
-// INVESTMENTS TAB – with working search (matches any part of account number)
+// INVESTMENTS TAB – with working real‑time search
 // ============================================================
 let allInvestments = [];
 
@@ -591,6 +591,12 @@ function renderInvestments(investments) {
       </div>
     </div>
   `;
+
+  // Restore search input value if it was previously set
+  const searchInput = document.getElementById('invest-search');
+  if (searchInput) {
+    // If there's a search query stored, re‑apply it (optional)
+  }
 }
 
 function filterInvestments() {
