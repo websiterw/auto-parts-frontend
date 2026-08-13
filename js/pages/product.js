@@ -1,4 +1,4 @@
-import { getProducts, purchaseProduct, apiCall } from '../api.js';
+import { getProducts, purchaseProduct } from '../api.js';
 import { toastError, toastSuccess } from '../api.js';
 
 export async function renderProduct() {
