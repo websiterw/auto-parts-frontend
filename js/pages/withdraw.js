@@ -1,143 +1,153 @@
-import { apiCall } from '../api.js';
+import { requestWithdrawal, getMe } from '../api.js';
 import { toastError, toastSuccess } from '../api.js';
 
-export function renderWithdraw() {
+export async function renderWithdraw() {
   const app = document.getElementById('app');
-  const user = JSON.parse(localStorage.getItem('user')) || { balance: 0, id: null };
-  app.className = 'dark-page';
+  const user = JSON.parse(localStorage.getItem('user')) || {};
+  let balance = user.balance || 0;
+  let channel = 'MTN';
+  let phone = '';
+  let holder = '';
+  let amount = 0;
+  const MIN = 3000;
+  const FEE = 0.2;
+  let submitted = false;
+  let orderId = '';
 
-  let banks = JSON.parse(localStorage.getItem('bankCards')) || [];
+  // Check if user has active product
+  let hasProduct = false;
+  try {
+    const investments = await apiCall('/investments');
+    hasProduct = investments.length > 0;
+  } catch (e) {}
 
-  app.innerHTML = `
-    <div style="padding: 12px 0 8px;">
-
-      <div style="position:relative; width:100%; margin-bottom:16px;">
-        <img src="assets/images/withdraw-up.png" alt="Withdraw" style="width:100%; border-radius:16px; display:block;" onerror="this.style.display='none'">
-        <button id="withdraw-back" style="position:absolute; top:12px; left:12px; background:rgba(0,0,0,0.5); border:none; color:#fff; font-size:22px; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;">
-          <i class="fas fa-chevron-left"></i>
-        </button>
-        <button id="withdraw-history" style="position:absolute; top:12px; right:12px; background:rgba(0,0,0,0.5); border:none; color:#fff; font-size:22px; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;">
-          <i class="fas fa-clock"></i>
-        </button>
-        <div style="position:absolute; bottom:12px; left:50%; transform:translateX(-50%); color:#fff; font-weight:700; font-size:18px; text-shadow:0 2px 8px rgba(0,0,0,0.8);">
-          My balance
+  function render() {
+    if (submitted) {
+      app.innerHTML = `
+        <div class="hero" style="background: var(--green);">
+          <div class="hero-overlay"></div>
+          <div class="hero-title">WITHDRAWAL</div>
         </div>
+        <div class="px-4 -mt-6">
+          <div class="card text-center">
+            <span class="text-2xl">⏳</span>
+            <p class="text-green-600 font-bold text-lg">Processing</p>
+            <p class="text-muted text-sm">Your withdrawal of RWF ${amount} has been received. Withdrawals arrive within 4-24 hours.</p>
+          </div>
+          <div class="card">
+            <p class="text-muted text-xs">Order ID: ${orderId}</p>
+            <p class="text-muted text-xs">Method: ${channel}</p>
+            <p class="text-muted text-xs">Account: ${phone}</p>
+            <p class="text-muted text-xs">Holder: ${holder}</p>
+            <p class="text-muted text-xs">Fee (20%): RWF ${(amount * FEE).toFixed(2)}</p>
+            <p class="text-muted text-xs">Received: RWF ${(amount * (1 - FEE)).toFixed(2)}</p>
+            <p class="text-green-600 font-bold text-xs">Status: Processing</p>
+          </div>
+          <button class="btn" onclick="window.location.hash='home'">Back to home</button>
+        </div>
+      `;
+      return;
+    }
+
+    app.innerHTML = `
+      <div class="hero" style="background: var(--green);">
+        <div class="hero-overlay"></div>
+        <div class="hero-title">WITHDRAWAL</div>
       </div>
-
-      <div class="card">
-        <div style="text-align:center; padding:8px 0 16px;">
-          <p style="color:#b0baca; font-size:13px;">Available Balance</p>
-          <p style="font-size:28px; font-weight:700; color:#FF6B00;">RWF ${user.balance?.toFixed(2) || '0.00'}</p>
+      <div class="px-4 -mt-6">
+        ${!hasProduct ? `<div class="bg-red-50 border border-red-500 text-red-500 text-sm font-semibold p-3 rounded-md mb-4">You must buy a product before you can withdraw.</div>` : ''}
+        <p class="font-semibold text-sm">My balance</p>
+        <div class="card flex items-center gap-4">
+          <span class="text-2xl">📈</span>
+          <span class="flex-1 text-center text-2xl font-bold text-green-600">RWF ${balance.toFixed(2)}</span>
         </div>
-
-        <div class="input-group">
-          <label>Please select your bank card</label>
-          ${banks.length === 0 ? `
-            <div style="background:#0a0e17; border-radius:10px; padding:12px; text-align:center; color:#b0baca; border:1px solid #2a3040;">
-              No bank card added. 
-              <button class="btn btn-small" style="width:auto; padding:4px 12px; margin-top:8px; background:#FF6B00;" id="withdraw-add-card">Add Bank Card</button>
-            </div>
-          ` : `
-            <select id="withdraw-bank-select" style="width:100%; padding:12px 14px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff; font-size:15px;">
-              <option value="">Select a card</option>
-              ${banks.map((b, index) => `
-                <option value="${index}">${b.name} - ${b.number.slice(-4)} (${b.holder})</option>
-              `).join('')}
-            </select>
-          `}
+        <p class="font-semibold text-sm mt-4">Please select your bank card</p>
+        <button id="bank-picker" class="card flex items-center gap-3 w-full text-left">
+          <span class="text-lg">💳</span>
+          <span class="flex-1 text-sm" style="color: ${phone ? '#343434' : '#8a8a8a'};">${phone ? `${channel} · ${phone} · ${holder}` : '_ _ _ _ _ _ - _ _ _ _ _ _ _ _ _ _ _ _ _'}</span>
+          <span class="text-gray-400">›</span>
+        </button>
+        <p class="font-semibold text-sm mt-4">Enter withdrawal amount</p>
+        <div class="flex items-center border-2 rounded-md px-4 py-3" style="border-color: var(--green);">
+          <span class="text-muted mr-2">RWF</span>
+          <input id="withdraw-amount" type="number" placeholder="Please enter amount" class="flex-1 outline-none bg-transparent">
         </div>
-
-        <div class="input-group">
-          <label>Enter withdrawal amount</label>
-          <input type="number" id="withdraw-amount" placeholder="RWF Please enter withdrawal amount" style="width:100%; padding:12px 14px; border-radius:10px; border:1px solid #2a3040; background:#0a0e17; color:#fff; font-size:15px;">
-        </div>
-
-        <div style="display:flex; justify-content:space-between; padding:8px 0; color:#b0baca; font-size:14px;">
+        <div class="flex justify-between text-sm text-muted mt-2">
+          <span>Received: <span id="received-display" class="text-green-600">RWF 0</span></span>
           <span>Fee rate: 20%</span>
-          <span>Received amount: <span id="received-amount" style="color:#FF6B00; font-weight:700;">RWF 0</span></span>
         </div>
-
-        <button class="btn" id="withdraw-confirm" style="margin-top:8px;">Confirm</button>
-
-        <div style="font-size:12px; color:#6a7488; margin-top:16px; line-height:1.6;">
-          <p>1. Minimum withdrawal amount: RWF 3000.</p>
-          <p>2. Withdrawal fee is 20% of the withdrawal amount.</p>
-          <p>3. You can withdraw at any time. Withdrawals arrive within 4-24 hours.</p>
-          <p>4. To protect the interests of the platform and its members, you must have at least one device to activate the withdrawal function.</p>
-        </div>
+        <button id="withdraw-submit" class="btn mt-4" style="background: var(--green);">Confirm</button>
+        <ol class="text-xs text-muted mt-4 space-y-1">
+          <li>1. Minimum withdrawal: RWF 3000.</li>
+          <li>2. Fee is 20% of the amount.</li>
+          <li>3. Arrives within 4-24 hours.</li>
+          <li>4. You must have an active product.</li>
+        </ol>
       </div>
-    </div>
-  `;
+    `;
 
-  const addCardBtn = document.getElementById('withdraw-add-card');
-  if (addCardBtn) {
-    addCardBtn.addEventListener('click', () => window.location.hash = 'bindBank');
+    // Bind events
+    document.getElementById('withdraw-amount').addEventListener('input', (e) => {
+      amount = parseFloat(e.target.value) || 0;
+      const received = amount * (1 - FEE);
+      document.getElementById('received-display').textContent = `RWF ${received.toFixed(2)}`;
+    });
+
+    document.getElementById('bank-picker').addEventListener('click', () => {
+      // Simple popup for bank selection (we'll do a small modal)
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 z-50 bg-black/50 flex items-center justify-center px-5';
+      modal.innerHTML = `
+        <div class="bg-white rounded-xl p-5 w-full max-w-sm">
+          <p class="text-center font-semibold text-sm">Bind your withdrawal account</p>
+          <div class="grid grid-cols-2 gap-2 mt-3">
+            <button class="channel-btn border-2 rounded-md py-2 text-sm font-semibold" data-channel="MTN" style="border-color: ${channel === 'MTN' ? 'var(--green)' : '#e5e5e5'}; background: ${channel === 'MTN' ? '#f3fdf6' : '#fff'};">MTN</button>
+            <button class="channel-btn border-2 rounded-md py-2 text-sm font-semibold" data-channel="Airtel" style="border-color: ${channel === 'Airtel' ? 'var(--green)' : '#e5e5e5'}; background: ${channel === 'Airtel' ? '#f3fdf6' : '#fff'};">Airtel</button>
+          </div>
+          <div class="border-2 rounded-md px-4 py-3 mt-3" style="border-color: #e5e5e5;">
+            <input id="phone-input" type="text" placeholder="07XXXXXXXX" class="w-full outline-none bg-transparent text-sm" value="${phone}">
+          </div>
+          <div class="border-2 rounded-md px-4 py-3 mt-2" style="border-color: #e5e5e5;">
+            <input id="holder-input" type="text" placeholder="Account holder name" class="w-full outline-none bg-transparent text-sm" value="${holder}">
+          </div>
+          <p class="text-xs text-muted mt-1">The name must match the mobile money account owner.</p>
+          <button id="save-bank" class="btn mt-3">Save</button>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      modal.querySelectorAll('.channel-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          channel = btn.dataset.channel;
+          modal.remove();
+          render();
+        });
+      });
+      modal.querySelector('#save-bank').addEventListener('click', () => {
+        phone = document.getElementById('phone-input').value.trim();
+        holder = document.getElementById('holder-input').value.trim();
+        modal.remove();
+        render();
+      });
+    });
+
+    document.getElementById('withdraw-submit').addEventListener('click', async () => {
+      if (!hasProduct) { toastError('You must have an active product to withdraw.'); return; }
+      if (!phone || !holder) { toastError('Please bind your payment account first.'); return; }
+      if (amount < MIN) { toastError(`Minimum withdrawal is RWF ${MIN}`); return; }
+      if (amount > balance) { toastError('Insufficient balance'); return; }
+      const fee = amount * FEE;
+      const net = amount - fee;
+      orderId = 'WD' + Date.now().toString().slice(-8);
+      try {
+        await requestWithdrawal({ amount, fee, netAmount: net, bankDetails: { bank: channel, accountName: holder, accountNumber: phone } });
+        submitted = true;
+        render();
+      } catch (err) {
+        toastError(err.message);
+      }
+    });
   }
 
-  document.getElementById('withdraw-amount').addEventListener('input', (e) => {
-    const amt = parseFloat(e.target.value) || 0;
-    const fee = amt * 0.2;
-    const received = amt - fee;
-    document.getElementById('received-amount').textContent = `RWF ${received.toFixed(2)}`;
-  });
-
-  document.getElementById('withdraw-confirm').addEventListener('click', async () => {
-    const amount = parseFloat(document.getElementById('withdraw-amount').value);
-    const select = document.getElementById('withdraw-bank-select');
-
-    if (!amount || amount < 3000) {
-      window.toastError('Minimum withdrawal is RWF 3,000');
-      return;
-    }
-    if (amount > user.balance) {
-      window.toastError('Insufficient balance');
-      return;
-    }
-    if (!select) {
-      window.toastError('Please add a bank card first.');
-      return;
-    }
-    const index = select.value;
-    if (index === '') {
-      window.toastError('Please select a bank card.');
-      return;
-    }
-    const bank = banks[parseInt(index)];
-    if (!bank) {
-      window.toastError('Selected card not found.');
-      return;
-    }
-
-    const fee = amount * 0.2;
-    const netAmount = amount - fee;
-    const payload = {
-      amount,
-      fee,
-      netAmount,
-      bankDetails: {
-        bank: bank.name,
-        accountName: bank.holder,
-        accountNumber: bank.number
-      }
-    };
-
-    try {
-      await apiCall('/withdrawals/request', {
-        method: 'POST',
-        body: JSON.stringify(payload)
-      });
-      window.toastSuccess('Withdrawal request submitted for approval.');
-      // Deduct balance immediately (will be refunded if rejected)
-      user.balance -= amount;
-      localStorage.setItem('user', JSON.stringify(user));
-      setTimeout(() => window.location.hash = 'home', 1500);
-    } catch (err) {
-      window.toastError(err.message || 'Failed to submit withdrawal.');
-    }
-  });
-
-  document.getElementById('withdraw-back').addEventListener('click', () => window.location.hash = 'home');
-  document.getElementById('withdraw-history').addEventListener('click', () => window.location.hash = 'withdrawalRecords');
-
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  render();
 }
