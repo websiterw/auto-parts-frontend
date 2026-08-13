@@ -1,60 +1,41 @@
-import { getMe } from '../api.js';
-import { toastSuccess } from '../api.js';
+import { getTeamData } from '../api.js';
 
-export async function renderMine() {
+export async function renderTeam() {
   const app = document.getElementById('app');
   const user = JSON.parse(localStorage.getItem('user')) || {};
-  const fresh = await getMe().catch(() => user);
-  const balance = fresh.balance || 0;
-  const income = fresh.cumulativeIncome || 0;
-  const code = fresh.myReferralCode || '';
+  const data = await getTeamData().catch(() => ({ totalUsers: 0, totalRewards: 0, code: user.myReferralCode || '' }));
 
   app.innerHTML = `
-    <div class="hero" style="background: var(--green);">
-      <div class="hero-overlay"></div>
-      <div class="hero-title">Mine</div>
+    <div style="position:relative; width:100%; height:200px; background: #22c55e;">
+      <div style="position:absolute; inset:0; background:rgba(0,0,0,0.25);"></div>
+      <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:32px; font-weight:900; letter-spacing:2px; text-shadow:0 2px 10px rgba(0,0,0,0.3);">My team</div>
     </div>
-    <div class="px-4 -mt-6">
-      <div class="card flex items-center gap-3">
-        <span class="w-14 h-14 rounded-full bg-green-500 flex items-center justify-center text-white text-xl font-black">${(user.accountNumber || '').slice(-2) || 'AP'}</span>
-        <div>
-          <p class="font-black" style="color: var(--green-dark);">Account ${user.accountNumber || '-'}</p>
-          <p class="text-xs" style="color: var(--red);">Invite code: ${code}</p>
+    <div style="padding:0 16px; margin-top:-24px;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+        <div style="background:#fff; border-radius:16px; padding:16px; border:2px solid #22c55e; text-align:center;">
+          <p style="color:#6b6b6b; font-size:12px;">Team members</p>
+          <p style="font-size:24px; font-weight:900; color:#dc2626;">${data.totalUsers || 0}</p>
+        </div>
+        <div style="background:#fff; border-radius:16px; padding:16px; border:2px solid #22c55e; text-align:center;">
+          <p style="color:#6b6b6b; font-size:12px;">Team purchases</p>
+          <p style="font-size:24px; font-weight:900; color:#dc2626;">RWF ${(data.totalRewards || 0).toFixed(2)}</p>
         </div>
       </div>
-      <div class="grid-2">
-        <div class="card text-center"><p class="text-muted">Balance</p><p class="text-xl font-black" style="color: var(--red);">RWF ${balance.toFixed(2)}</p></div>
-        <div class="card text-center"><p class="text-muted">Total income</p><p class="text-xl font-black" style="color: var(--red);">RWF ${income.toFixed(2)}</p></div>
+      <div style="background:#fff; border-radius:16px; padding:16px; border:2px solid #22c55e; margin-bottom:16px;">
+        <p style="font-weight:900; color:#16a34a;">My invitation code</p>
+        <p style="font-size:24px; font-weight:900; letter-spacing:2px; color:#dc2626;">${data.code || user.myReferralCode || '------'}</p>
+        <p style="font-size:12px; word-break:break-all; margin-top:8px; color:#16a34a;">${window.location.origin}/#register?code=${data.code || ''}</p>
+        <button class="btn" style="margin-top:8px; background:#22c55e; color:#fff; border:none; border-radius:30px; padding:10px 16px; font-weight:700; cursor:pointer; width:100%;" onclick="navigator.clipboard.writeText('${window.location.origin}/#register?code=${data.code || ''}'); window.toastSuccess('Link copied!')">Copy invitation link</button>
       </div>
-      <div class="grid-2">
-        <button class="btn" onclick="window.location.hash='recharge'">Recharge</button>
-        <button class="btn" onclick="window.location.hash='withdraw'">Withdraw</button>
-        <button class="btn" onclick="window.location.hash='team'">My team</button>
-        <button class="btn" id="checkin-btn">Check in</button>
+      <div style="background:#fff; border-radius:16px; padding:16px; border:2px solid #22c55e;">
+        <p style="font-weight:900; margin-bottom:8px; color:#16a34a;">How the team works</p>
+        <ol style="font-size:12px; color:#16a34a; list-style-position:inside; padding-left:0;">
+          <li style="margin-bottom:4px;">1. Share your invitation link with friends.</li>
+          <li style="margin-bottom:4px;">2. They register with your code and get RWF 3,000 to start.</li>
+          <li style="margin-bottom:4px;">3. Every product they buy is counted in your team purchases.</li>
+          <li style="margin-bottom:4px;">4. The bigger the team, the bigger the daily rewards.</li>
+        </ol>
       </div>
-      <div class="card mt-4">
-        <div class="space-y-2">
-          <button class="btn btn-secondary" onclick="window.location.hash='records'">Recharge records</button>
-          <button class="btn btn-secondary" onclick="window.location.hash='records'">Withdrawal records</button>
-          <button class="btn btn-secondary" onclick="window.location.hash='records'">Income records</button>
-          <button class="btn btn-secondary" onclick="window.location.hash='myproduct'">My products</button>
-          <button class="btn btn-secondary" onclick="window.location.hash='team'">My team</button>
-          <button class="btn btn-secondary" onclick="navigator.clipboard.writeText('${window.location.origin}/#register?code=${code}'); toastSuccess('Link copied!')">Invitation link</button>
-          <button class="btn btn-secondary" onclick="window.open('https://t.me/your_group', '_blank')">Customer service</button>
-          <button class="btn btn-secondary" onclick="window.open('https://t.me/your_group', '_blank')">Join official group</button>
-        </div>
-      </div>
-      <button class="btn btn-red mt-4" onclick="localStorage.clear(); window.location.hash='login';">Logout</button>
     </div>
   `;
-
-  document.getElementById('checkin-btn').addEventListener('click', async () => {
-    try {
-      await apiCall('/checkin', { method: 'POST' });
-      toastSuccess('Check-in successful!');
-      renderMine();
-    } catch (err) {
-      toastError(err.message || 'Already checked in today');
-    }
-  });
 }
