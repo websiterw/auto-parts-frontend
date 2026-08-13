@@ -3,30 +3,29 @@ import { toastError, toastSuccess } from '../api.js';
 
 export function renderLogin() {
   const app = document.getElementById('app');
+
   app.innerHTML = `
-    <div class="hero" style="background: var(--green);">
-      <img src="assets/images/login-banner.png" alt="Style House" class="hero" style="height:280px; object-fit:cover;" onerror="this.style.display='none'">
-      <div class="hero-overlay"></div>
-      <div class="hero-title">Style House</div>
+    <div style="position:relative; width:100%; height:280px; background: #22c55e;">
+      <img src="assets/images/login-banner.png" alt="Style House" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'">
+      <div style="position:absolute; inset:0; background:rgba(0,0,0,0.25);"></div>
+      <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:32px; font-weight:900; letter-spacing:2px; text-shadow:0 2px 10px rgba(0,0,0,0.3);">Style House</div>
     </div>
-    <div class="px-4 -mt-6">
-      <form id="login-form" class="bg-white rounded-t-3xl border-t-4 pt-6 pb-8 px-6" style="border-color: var(--red);">
-        <h1 class="text-center text-4xl font-extrabold mb-6" style="color: var(--red);">LOGIN</h1>
-        <div class="space-y-4">
-          <div class="flex items-center border-2 rounded-xl px-4 py-3" style="border-color: var(--green);">
-            <span class="w-6 h-6 rounded-full bg-green-500 mr-3"></span>
-            <input id="login-account" type="text" placeholder="Account number" class="flex-1 outline-none bg-transparent" style="color: var(--green-dark);">
+    <div style="padding:0 16px; margin-top:-24px;">
+      <form id="login-form" style="background:#fff; border-radius:32px 32px 0 0; border-top:4px solid #dc2626; padding:24px 24px 32px;">
+        <h1 style="text-align:center; font-size:36px; font-weight:900; color:#dc2626; margin-bottom:24px;">LOGIN</h1>
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <div style="display:flex; align-items:center; border:2px solid #22c55e; border-radius:12px; padding:12px 16px;">
+            <input id="login-account" type="text" placeholder="Account number" style="flex:1; outline:none; border:none; background:transparent; color:#16a34a; font-size:16px;">
           </div>
-          <div class="flex items-center border-2 rounded-xl px-4 py-3" style="border-color: var(--green);">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--green)" class="mr-3"><path d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-9V7a3 3 0 1 1 6 0h2a5 5 0 0 0-5-5z"/></svg>
-            <input id="login-password" type="password" placeholder="Password" class="flex-1 outline-none bg-transparent" style="color: var(--green-dark);">
+          <div style="display:flex; align-items:center; border:2px solid #22c55e; border-radius:12px; padding:12px 16px;">
+            <input id="login-password" type="password" placeholder="Password" style="flex:1; outline:none; border:none; background:transparent; color:#16a34a; font-size:16px;">
           </div>
         </div>
-        <div class="text-right mt-4">
-          <a href="#register" class="underline font-medium" style="color: var(--red);">Go to register &gt;</a>
+        <div style="text-align:right; margin-top:16px;">
+          <a href="#register" style="color:#dc2626; font-weight:600; text-decoration:underline;">Go to register &gt;</a>
         </div>
-        <button type="submit" class="btn btn-red w-full py-4 text-2xl font-bold mt-4" style="background: var(--red);">Login</button>
-        <div id="login-msg" class="mt-3 text-center text-sm font-medium text-red-500"></div>
+        <button type="submit" style="width:100%; background:#dc2626; color:#fff; border:none; border-radius:30px; padding:16px; font-size:20px; font-weight:900; margin-top:16px; cursor:pointer;">Login</button>
+        <div id="login-msg" style="margin-top:12px; text-align:center; font-size:14px; font-weight:500; color:#dc2626;"></div>
       </form>
     </div>
   `;
