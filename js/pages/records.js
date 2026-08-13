@@ -1,64 +1,68 @@
-export function renderRecords() {
+import { getTransactions } from '../api.js';
+
+export async function renderRecords() {
   const app = document.getElementById('app');
-  app.className = 'dark-page';
-
-  // Read filter from sessionStorage and clear it
-  const filter = sessionStorage.getItem('recordFilter') || 'all';
-  sessionStorage.removeItem('recordFilter');
-
-  // Dummy data (replace with real API call)
-  const allRecords = [
-    { type: 'recharge', amount: 6000, ref: '******8102', date: '07/25/2026' },
-    { type: 'recharge', amount: 250000, ref: '******4512', date: '07/24/2026' },
-    { type: 'recharge', amount: 100000, ref: '******3682R', date: '07/23/2026' },
-    { type: 'withdraw', amount: -3125, ref: '******9301', date: '07/22/2026' },
-    { type: 'withdraw', amount: -4190, ref: '******2019', date: '07/21/2026' },
-    { type: 'withdraw', amount: -3000, ref: '******3821', date: '07/20/2026' }
-  ];
-
-  // Filter records
-  let filtered = allRecords;
-  if (filter === 'recharge') {
-    filtered = allRecords.filter(r => r.type === 'recharge');
-  } else if (filter === 'withdraw') {
-    filtered = allRecords.filter(r => r.type === 'withdraw');
-  }
-
-  // Page title
-  const title = filter === 'recharge' ? 'Recharge Records' :
-                filter === 'withdraw' ? 'Withdrawal Records' :
-                'All Records';
+  let txs = [];
+  try {
+    txs = await getTransactions();
+  } catch (e) {}
 
   app.innerHTML = `
-    <div style="padding: 12px 0 8px;">
-      <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
-        <button id="records-back" style="background:none; border:none; color:#FF6B00; font-size:24px; cursor:pointer;">
-          <i class="fas fa-chevron-left"></i>
-        </button>
-        <h2 style="font-size:20px; font-weight:700; color:#fff; margin:0;">${title}</h2>
+    <div class="hero" style="background: var(--green);">
+      <div class="hero-overlay"></div>
+      <div class="hero-title">RECORDS</div>
+    </div>
+    <div class="px-4 -mt-6">
+      <div class="bg-white rounded-t-2xl shadow-sm p-4">
+        <div class="flex gap-4 border-b pb-2">
+          <button class="tab-btn font-bold text-sm" data-tab="recharge" style="color: var(--green-dark); border-bottom: 2px solid var(--green);">Recharge</button>
+          <button class="tab-btn font-bold text-sm" data-tab="withdrawal" style="color: #8a8a8a;">Withdrawal</button>
+          <button class="tab-btn font-bold text-sm" data-tab="income" style="color: #8a8a8a;">Income</button>
+        </div>
+        <div id="records-list" class="mt-4 space-y-3">
+          ${txs.filter(t => t.type === 'recharge').slice(0, 10).map(t => `
+            <div class="bg-white rounded-lg p-3 border">
+              <div class="flex justify-between">
+                <span class="font-bold">${t.type}</span>
+                <span class="font-bold text-green-600">+RWF ${t.amount}</span>
+              </div>
+              <div class="text-xs text-muted">Order: ${t.reference || t._id}</div>
+              <div class="text-xs text-muted">Method: ${t.method || '-'}</div>
+              <div class="text-xs text-muted">Time: ${new Date(t.createdAt).toLocaleString()}</div>
+              <div class="text-xs font-semibold" style="color: ${t.status === 'success' ? 'var(--green)' : 'var(--red)'};">${t.status || 'success'}</div>
+            </div>
+          `).join('')}
+          ${txs.filter(t => t.type === 'recharge').length === 0 ? '<p class="text-muted text-sm">No recharge records.</p>' : ''}
+        </div>
       </div>
-
-      ${filtered.length === 0 ? `
-        <div class="card" style="text-align:center; padding:24px; color:#b0baca;">
-          No records found.
-        </div>
-      ` : filtered.map(r => `
-        <div style="background:#0a0e17; border-radius:12px; padding:10px 14px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; border-left:3px solid ${r.amount >= 0 ? '#4caf50' : '#f44336'};">
-          <div>
-            <p style="font-weight:500; color:#fff; font-size:14px;">${r.type.charAt(0).toUpperCase() + r.type.slice(1)} ${Math.abs(r.amount).toLocaleString()}</p>
-            <p style="font-size:11px; color:#6a7488;">${r.ref} · ${r.date}</p>
-          </div>
-          <p style="color:${r.amount >= 0 ? '#4caf50' : '#f44336'}; font-weight:600;">${r.amount >= 0 ? '+' : ''}RWF ${Math.abs(r.amount).toLocaleString()}</p>
-        </div>
-      `).join('')}
     </div>
   `;
 
-  // Back button → Home
-  document.getElementById('records-back').addEventListener('click', () => {
-    window.location.hash = 'home';
+  // Tab switching
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => { b.style.color = '#8a8a8a'; b.style.borderBottom = 'none'; });
+      btn.style.color = 'var(--green-dark)';
+      btn.style.borderBottom = '2px solid var(--green)';
+      const tab = btn.dataset.tab;
+      const list = document.getElementById('records-list');
+      const filtered = txs.filter(t => t.type === tab);
+      if (filtered.length === 0) {
+        list.innerHTML = `<p class="text-muted text-sm">No ${tab} records.</p>`;
+        return;
+      }
+      list.innerHTML = filtered.map(t => `
+        <div class="bg-white rounded-lg p-3 border">
+          <div class="flex justify-between">
+            <span class="font-bold">${t.type}</span>
+            <span class="font-bold ${t.type === 'withdrawal' ? 'text-red-500' : 'text-green-600'}">${t.type === 'withdrawal' ? '-' : '+'}RWF ${t.amount}</span>
+          </div>
+          <div class="text-xs text-muted">Order: ${t.reference || t._id}</div>
+          <div class="text-xs text-muted">Method: ${t.method || '-'}</div>
+          <div class="text-xs text-muted">Time: ${new Date(t.createdAt).toLocaleString()}</div>
+          <div class="text-xs font-semibold" style="color: ${t.status === 'success' ? 'var(--green)' : 'var(--red)'};">${t.status || 'success'}</div>
+        </div>
+      `).join('');
+    });
   });
-
-  // Bottom nav highlight
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
 }
