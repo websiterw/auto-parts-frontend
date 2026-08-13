@@ -8,8 +8,8 @@ export async function renderMyProduct() {
   app.innerHTML = `
     <div style="position:relative; width:100%; height:180px; background: #22c55e;">
       <img src="assets/images/myproduct-banner.png" alt="My product" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'">
-      <div style="position:absolute; inset:0; background:rgba(0,0,0,0.25);"></div>
-      <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:28px; font-weight:900; letter-spacing:2px; text-shadow:0 2px 10px rgba(0,0,0,0.3);">My product</div>
+      <!-- Fallback text if image fails -->
+      <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:28px; font-weight:900; letter-spacing:2px; text-shadow:0 2px 10px rgba(0,0,0,0.3);">My product</div>
     </div>
     <div style="padding:0 16px; margin-top:-20px;">
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
@@ -22,10 +22,9 @@ export async function renderMyProduct() {
           <p style="font-size:18px; font-weight:900; color:#dc2626;">RWF ${totalDaily.toFixed(2)}</p>
         </div>
       </div>
-
       ${investments.length === 0 ? `
         <div style="background:#fff; border-radius:16px; padding:16px; border:2px solid #22c55e; text-align:center; color:#6b6b6b;">
-          <p style="font-size:14px;">You have no active product yet.</p>
+          <p>You have no active product yet.</p>
           <button onclick="window.location.hash='product'" style="background:#22c55e; color:#fff; border:none; border-radius:30px; padding:10px 20px; font-weight:700; cursor:pointer; margin-top:12px;">Buy a product</button>
         </div>
       ` : investments.map(inv => `
