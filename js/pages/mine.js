@@ -10,7 +10,6 @@ export async function renderMine() {
   const code = fresh.myReferralCode || '';
   const account = fresh.accountNumber || '';
 
-  // Get product count and daily income
   let productCount = 0;
   let dailyIncome = 0;
   try {
@@ -20,6 +19,7 @@ export async function renderMine() {
   } catch (e) {}
 
   app.innerHTML = `
+    <!-- Banner -->
     <div style="position:relative; width:100%; height:180px; background: #22c55e;">
       <img src="assets/images/mine-banner.png" alt="Mine" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'">
       <div style="position:absolute; inset:0; background:rgba(0,0,0,0.25);"></div>
@@ -31,7 +31,7 @@ export async function renderMine() {
       <div style="background:#fff; border-radius:16px; padding:16px; border:2px solid #22c55e; display:flex; align-items:center; gap:12px; margin-bottom:16px;">
         <div style="width:56px; height:56px; border-radius:50%; background:#22c55e; display:flex; align-items:center; justify-content:center; color:#fff; font-size:20px; font-weight:900;">${account.slice(-2) || 'AP'}</div>
         <div>
-          <p style="font-weight:900; color:#16a34a;">Account ${account || '-'}</p>
+          <p style="font-weight:900; color:#16a34a; font-size:16px;">Account ${account || '-'}</p>
           <p style="font-size:12px; color:#dc2626;">Invite code: ${code}</p>
         </div>
       </div>
@@ -64,7 +64,7 @@ export async function renderMine() {
         <button class="btn" id="checkin-btn" style="background:#22c55e; color:#fff; border:none; border-radius:30px; padding:10px; font-weight:700; cursor:pointer;">Check in</button>
       </div>
 
-      <!-- Menu list (left‑aligned with icons) -->
+      <!-- Menu list with icons (left‑aligned) -->
       <div style="background:#fff; border-radius:16px; border:2px solid #22c55e; overflow:hidden; margin-bottom:16px;">
         ${[
           { icon: 'fa-receipt', label: 'Recharge records', action: "window.location.hash='records'" },
@@ -84,7 +84,7 @@ export async function renderMine() {
         `).join('')}
       </div>
 
-      <!-- Gift code & My orders (optional) -->
+      <!-- Gift code & My orders -->
       <div style="background:#fff; border-radius:16px; padding:16px; border:2px solid #22c55e; margin-bottom:16px;">
         <p style="font-weight:900; color:#16a34a; margin-bottom:8px;">Gift code</p>
         <div style="display:flex; gap:8px;">
@@ -102,7 +102,6 @@ export async function renderMine() {
     </div>
   `;
 
-  // Check-in
   document.getElementById('checkin-btn').addEventListener('click', async () => {
     try {
       await apiCall('/checkin', { method: 'POST' });
@@ -113,7 +112,6 @@ export async function renderMine() {
     }
   });
 
-  // Gift redeem
   document.getElementById('gift-redeem').addEventListener('click', async () => {
     const code = document.getElementById('gift-input').value.trim();
     if (!code) { toastError('Enter a gift code'); return; }
