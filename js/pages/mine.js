@@ -3,102 +3,58 @@ import { toastSuccess } from '../api.js';
 
 export async function renderMine() {
   const app = document.getElementById('app');
-  app.className = 'dark-page';
-
-  // Fetch fresh user data from the backend
-  let user = JSON.parse(localStorage.getItem('user')) || {};
-  try {
-    const fresh = await getMe();
-    user = fresh;
-    localStorage.setItem('user', JSON.stringify(user));
-  } catch (e) {
-    // fallback to cached user data
-  }
+  const user = JSON.parse(localStorage.getItem('user')) || {};
+  const fresh = await getMe().catch(() => user);
+  const balance = fresh.balance || 0;
+  const income = fresh.cumulativeIncome || 0;
+  const code = fresh.myReferralCode || '';
 
   app.innerHTML = `
-    <div style="padding: 12px 0 8px;">
-
-      <!-- Profile Header: image + phone + level + exit (inline) -->
-      <div class="card" style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px;">
-        <div style="display:flex; align-items:center; gap:12px;">
-          <img src="assets/images/profile.png" alt="Profile" style="width:56px; height:56px; border-radius:50%; object-fit:cover; background:#2a3040;" onerror="this.style.display='none'">
-          <div>
-            <p style="font-weight:600; color:#fff; font-size:16px;">${user.accountNumber || 'N/A'}</p>
-            <p style="color:#FF6B00; font-size:13px;">LV${user.level || 1}</p>
-          </div>
-        </div>
-        <button class="btn btn-danger" style="width:auto; padding:6px 16px; font-size:12px;" id="mine-exit">Exit</button>
-      </div>
-
-      <!-- Balance & Income -->
-      <div style="display:flex; gap:10px; margin:12px 0;">
-        <div class="card" style="flex:1; text-align:center; padding:12px;">
-          <p style="color:#b0baca; font-size:12px;">Account Balance</p>
-          <p style="font-size:20px; font-weight:700; color:#fff;">RWF ${user.balance?.toFixed(2) || '0.00'}</p>
-        </div>
-        <div class="card" style="flex:1; text-align:center; padding:12px;">
-          <p style="color:#b0baca; font-size:12px;">Cumulative Income</p>
-          <p style="font-size:20px; font-weight:700; color:#4caf50;">RWF ${user.cumulativeIncome?.toFixed(2) || '0.00'}</p>
+    <div class="hero" style="background: var(--green);">
+      <div class="hero-overlay"></div>
+      <div class="hero-title">Mine</div>
+    </div>
+    <div class="px-4 -mt-6">
+      <div class="card flex items-center gap-3">
+        <span class="w-14 h-14 rounded-full bg-green-500 flex items-center justify-center text-white text-xl font-black">${(user.accountNumber || '').slice(-2) || 'AP'}</span>
+        <div>
+          <p class="font-black" style="color: var(--green-dark);">Account ${user.accountNumber || '-'}</p>
+          <p class="text-xs" style="color: var(--red);">Invite code: ${code}</p>
         </div>
       </div>
-
-      <!-- Four Action Buttons -->
-      <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px; margin:12px 0;">
-        <button class="btn btn-secondary" style="padding:10px 0; font-size:12px;" id="mine-recharge">Recharge</button>
-        <button class="btn btn-secondary" style="padding:10px 0; font-size:12px;" id="mine-withdraw">Withdraw</button>
-        <button class="btn btn-secondary" style="padding:10px 0; font-size:12px;" id="mine-help">Help</button>
-        <button class="btn" style="padding:10px 0; font-size:12px; background:#FF6B00;" id="mine-checkin">Check-in</button>
+      <div class="grid-2">
+        <div class="card text-center"><p class="text-muted">Balance</p><p class="text-xl font-black" style="color: var(--red);">RWF ${balance.toFixed(2)}</p></div>
+        <div class="card text-center"><p class="text-muted">Total income</p><p class="text-xl font-black" style="color: var(--red);">RWF ${income.toFixed(2)}</p></div>
       </div>
-
-      <!-- Task Center -->
-      <div class="card" style="display:flex; align-items:center; gap:12px; padding:12px 16px;">
-        <img src="assets/images/task-icon.png" alt="Tasks" style="width:50px; height:50px; border-radius:8px; background:#2a3040;" onerror="this.style.display='none'">
-        <div style="flex:1;">
-          <p style="font-weight:600; color:#fff;">Task Center</p>
-          <p style="font-size:12px; color:#b0baca;">Complete tasks and get generous bonuses</p>
+      <div class="grid-2">
+        <button class="btn" onclick="window.location.hash='recharge'">Recharge</button>
+        <button class="btn" onclick="window.location.hash='withdraw'">Withdraw</button>
+        <button class="btn" onclick="window.location.hash='team'">My team</button>
+        <button class="btn" id="checkin-btn">Check in</button>
+      </div>
+      <div class="card mt-4">
+        <div class="space-y-2">
+          <button class="btn btn-secondary" onclick="window.location.hash='records'">Recharge records</button>
+          <button class="btn btn-secondary" onclick="window.location.hash='records'">Withdrawal records</button>
+          <button class="btn btn-secondary" onclick="window.location.hash='records'">Income records</button>
+          <button class="btn btn-secondary" onclick="window.location.hash='myproduct'">My products</button>
+          <button class="btn btn-secondary" onclick="window.location.hash='team'">My team</button>
+          <button class="btn btn-secondary" onclick="navigator.clipboard.writeText('${window.location.origin}/#register?code=${code}'); toastSuccess('Link copied!')">Invitation link</button>
+          <button class="btn btn-secondary" onclick="window.open('https://t.me/your_group', '_blank')">Customer service</button>
+          <button class="btn btn-secondary" onclick="window.open('https://t.me/your_group', '_blank')">Join official group</button>
         </div>
-        <button class="btn btn-small" style="width:auto; padding:6px 18px;" id="mine-tasks">GO</button>
       </div>
-
-      <!-- More Section – vertical list -->
-      <p style="color:#b0baca; font-size:14px; margin:16px 0 8px;">More</p>
-      <div style="display:flex; flex-direction:column; gap:6px;">
-        <button class="btn btn-secondary" style="text-align:left; padding:12px 16px; font-size:14px; width:100%;" id="mine-about">About us</button>
-        <button class="btn btn-secondary" style="text-align:left; padding:12px 16px; font-size:14px; width:100%;" id="mine-regulation">Regulation</button>
-        <button class="btn btn-secondary" style="text-align:left; padding:12px 16px; font-size:14px; width:100%;" id="mine-records">Records</button>
-        <button class="btn btn-secondary" style="text-align:left; padding:12px 16px; font-size:14px; width:100%;" id="mine-cs">Customer Service</button>
-        <button class="btn btn-secondary" style="text-align:left; padding:12px 16px; font-size:14px; width:100%;" id="mine-report">Report Share</button>
-        <button class="btn btn-secondary" style="text-align:left; padding:12px 16px; font-size:14px; width:100%;" id="mine-bank">Bind bank card</button>
-        <button class="btn btn-secondary" style="text-align:left; padding:12px 16px; font-size:14px; width:100%;" id="mine-pwd">Change Pwd</button>
-        <button class="btn btn-secondary" style="text-align:left; padding:12px 16px; font-size:14px; width:100%;" id="mine-gift">Redeem Gift</button>
-      </div>
+      <button class="btn btn-red mt-4" onclick="localStorage.clear(); window.location.hash='login';">Logout</button>
     </div>
   `;
 
-  // Event listeners
-  document.getElementById('mine-recharge').addEventListener('click', () => window.location.hash = 'recharge');
-  document.getElementById('mine-withdraw').addEventListener('click', () => window.location.hash = 'withdraw');
-  document.getElementById('mine-help').addEventListener('click', () => window.location.hash = 'customerService');
-  document.getElementById('mine-checkin').addEventListener('click', () => window.location.hash = 'checkin');
-  document.getElementById('mine-tasks').addEventListener('click', () => window.location.hash = 'task');
-  document.getElementById('mine-records').addEventListener('click', () => window.location.hash = 'records');
-  document.getElementById('mine-cs').addEventListener('click', () => window.location.hash = 'customerService');
-  document.getElementById('mine-gift').addEventListener('click', () => window.location.hash = 'redeemGift');
-  document.getElementById('mine-about').addEventListener('click', () => window.location.hash = 'about');
-  document.getElementById('mine-regulation').addEventListener('click', () => window.location.hash = 'regulation');
-  document.getElementById('mine-report').addEventListener('click', () => window.location.hash = 'reportShare');
-  document.getElementById('mine-bank').addEventListener('click', () => window.location.hash = 'bankList');
-  document.getElementById('mine-pwd').addEventListener('click', () => window.location.hash = 'changePassword');
-
-  document.getElementById('mine-exit').addEventListener('click', () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    window.toastSuccess('Logged out');
-    setTimeout(() => window.location.hash = 'login', 500);
+  document.getElementById('checkin-btn').addEventListener('click', async () => {
+    try {
+      await apiCall('/checkin', { method: 'POST' });
+      toastSuccess('Check-in successful!');
+      renderMine();
+    } catch (err) {
+      toastError(err.message || 'Already checked in today');
+    }
   });
-
-  // Bottom nav highlight
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-  const activeNav = document.querySelector('.nav-item[data-page="mine"]');
-  if (activeNav) activeNav.classList.add('active');
 }
