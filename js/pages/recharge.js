@@ -5,11 +5,11 @@ export async function renderRecharge() {
   const app = document.getElementById('app');
   let step = 1;
   let amount = 0;
-  let method = 'MTN';
+  let bank = 'MTN';        // default Bank A
+  let paymentMethod = 'MTN';
   let account = '';
   let holderName = '';
   let orderId = '';
-
   const presetAmounts = [6000, 12000, 25000, 50000, 100000, 250000, 500000, 1000000];
   const MIN = 6000;
   const GOLD = '#d99b1c';
@@ -47,13 +47,10 @@ export async function renderRecharge() {
             <span style="color:#6b6b6b; margin-right:8px;">RWF</span>
             <input id="custom-amount" type="number" placeholder="Enter amount" style="flex:1; outline:none; border:none; background:transparent; font-size:16px; color:#343434;" value="${amount || ''}">
           </div>
-          <div style="background:#fff; border-radius:12px; padding:16px; border:2px solid ${GOLD}; margin-bottom:16px;">
-            <p style="font-weight:600; color:#343434; margin-bottom:4px;">Recharge method</p>
-            <div style="display:flex; align-items:center; border:2px solid ${GOLD}; border-radius:8px; padding:12px 16px; background:#fffaf0;">
-              <span style="font-size:20px; margin-right:12px;">🏦</span>
-              <span style="flex:1; font-weight:600; color:#343434;">Deposit Bank</span>
-              <span style="color:${GOLD}; font-size:20px;">✓</span>
-            </div>
+          <p style="font-weight:600; color:#343434; margin-bottom:4px;">Select deposit bank</p>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+            <button class="bank-btn" data-bank="MTN" style="border:2px solid ${bank === 'MTN' ? GOLD : '#e5e5e5'}; background:${bank === 'MTN' ? '#fffaf0' : '#fff'}; border-radius:8px; padding:12px; font-weight:600; color:#343434; cursor:pointer;">Bank A (MTN)</button>
+            <button class="bank-btn" data-bank="Airtel" style="border:2px solid ${bank === 'Airtel' ? GOLD : '#e5e5e5'}; background:${bank === 'Airtel' ? '#fffaf0' : '#fff'}; border-radius:8px; padding:12px; font-weight:600; color:#343434; cursor:pointer;">Bank B (Airtel)</button>
           </div>
           <button id="confirm-amount" style="width:100%; background:${amount >= MIN ? GOLD : '#d9d9d9'}; color:#fff; border:none; border-radius:30px; padding:14px; font-weight:700; font-size:16px; cursor:${amount >= MIN ? 'pointer' : 'default'}; margin-bottom:12px;" ${amount < MIN ? 'disabled' : ''}>Confirm</button>
           <button onclick="window.location.hash='records'" style="width:100%; background:transparent; border:2px solid ${GOLD}; color:${GOLD_DARK}; border-radius:30px; padding:12px; font-weight:700; font-size:14px; cursor:pointer; margin-bottom:16px;">View recharge history</button>
@@ -72,28 +69,32 @@ export async function renderRecharge() {
             <button onclick="step=1; render()" style="position:absolute; top:12px; right:16px; background:none; border:none; font-size:24px; color:#999; cursor:pointer;">&times;</button>
             <p style="text-align:center; font-weight:900; color:${GOLD}; font-size:14px; letter-spacing:2px;">◎ STYLE HOUSE PAY</p>
             <p style="font-size:14px; color:#343434; margin-top:8px;">Payment Amount: <span style="font-weight:bold; color:${GOLD};">RWF ${amount}</span></p>
+            <p style="font-size:14px; color:#343434;">Deposit Bank: <span style="font-weight:bold;">${bank}</span></p>
             <p style="font-size:12px; color:#6b6b6b; margin-top:12px;">Please select a payment method</p>
             <div style="display:flex; gap:10px; margin-top:6px;">
-              <button class="method-btn" data-method="MTN" style="flex:1; border:2px solid ${method === 'MTN' ? GOLD : '#e0e0e0'}; background:${method === 'MTN' ? '#fffaf0' : '#fff'}; border-radius:8px; padding:12px; font-weight:600; color:#343434; cursor:pointer;">MTN</button>
-              <button class="method-btn" data-method="Airtel" style="flex:1; border:2px solid ${method === 'Airtel' ? GOLD : '#e0e0e0'}; background:${method === 'Airtel' ? '#fffaf0' : '#fff'}; border-radius:8px; padding:12px; font-weight:600; color:#343434; cursor:pointer;">AIRTEL</button>
+              <button class="method-btn" data-method="MTN" style="flex:1; border:2px solid ${paymentMethod === 'MTN' ? GOLD : '#e0e0e0'}; background:${paymentMethod === 'MTN' ? '#fffaf0' : '#fff'}; border-radius:8px; padding:12px; font-weight:600; color:#343434; cursor:pointer;">MTN</button>
+              <button class="method-btn" data-method="Airtel" style="flex:1; border:2px solid ${paymentMethod === 'Airtel' ? GOLD : '#e0e0e0'}; background:${paymentMethod === 'Airtel' ? '#fffaf0' : '#fff'}; border-radius:8px; padding:12px; font-weight:600; color:#343434; cursor:pointer;">AIRTEL</button>
             </div>
             <div style="display:flex; align-items:center; border:2px solid #e0e0e0; border-radius:8px; padding:10px 14px; margin-top:12px;">
               <span style="color:${GOLD}; font-weight:600; margin-right:8px;">+250</span>
-              <input id="pay-account" type="text" placeholder="Please enter your payment account" style="flex:1; outline:none; border:none; background:transparent; font-size:14px; color:#343434;">
+              <input id="pay-account" type="text" placeholder="Enter payment account number" style="flex:1; outline:none; border:none; background:transparent; font-size:14px; color:#343434;">
             </div>
-            <!-- NEW: Account Holder Name -->
-            <div style="display:flex; align-items:center; border:2px solid #e0e0e0; border-radius:8px; padding:10px 14px; margin-top:8px;">
-              <span style="color:${GOLD}; font-weight:600; margin-right:8px;">👤</span>
-              <input id="pay-holder" type="text" placeholder="Account holder name" style="flex:1; outline:none; border:none; background:transparent; font-size:14px; color:#343434;">
+            <div style="border:2px solid #e0e0e0; border-radius:8px; padding:10px 14px; margin-top:8px;">
+              <input id="pay-holder" type="text" placeholder="Account holder name" style="width:100%; outline:none; border:none; background:transparent; font-size:14px; color:#343434;">
             </div>
-            <p style="font-size:11px; color:#dc2626; margin-top:6px;">⚠ Please fill in your payment account accurately, incorrect filling may result in the loss of the transferred funds.</p>
+            <p style="font-size:11px; color:#dc2626; margin-top:6px;">⚠ Please fill in your payment account accurately.</p>
             <button id="confirm-pay" style="width:100%; background:${GOLD}; color:#fff; border:none; border-radius:30px; padding:14px; font-weight:700; font-size:16px; cursor:pointer; margin-top:16px;">Confirm →</button>
           </div>
         </div>
       `;
     } else if (step === 3) {
-      const bank = bankDetails[method];
-      const ussd = `*182*1*1*${bank.number}*${amount}#`;
+      const bankAccount = bankDetails[bank].number;
+      const bankName = bankDetails[bank].name;
+      // Determine the payment code digit: 1 if paymentMethod matches bank? Actually your spec:
+      // If bank is MTN and paymentMethod MTN: 1; if bank MTN and paymentMethod Airtel: 2; if bank Airtel and paymentMethod Airtel: 1; if bank Airtel and paymentMethod MTN: 2.
+      // So: paymentDigit = (bank === paymentMethod) ? 1 : 2
+      const paymentDigit = (bank === paymentMethod) ? 1 : 2;
+      const ussd = `*182*1*${paymentDigit}*${bankAccount}*${amount}#`;
       html = `
         <div style="position:fixed; inset:0; z-index:50; background:#f5f5f5; overflow-y:auto;">
           <div style="background:#2b2b2b; padding:16px; display:flex; justify-content:space-between; align-items:center;">
@@ -103,29 +104,28 @@ export async function renderRecharge() {
           <div style="padding:16px; max-width:400px; margin:0 auto;">
             <div style="background:#fff; border-radius:16px; padding:16px; border:2px solid ${GOLD}; margin-bottom:16px;">
               <p style="font-weight:600; color:#343434;">COPY &amp; PAY</p>
-              <p style="font-size:12px; color:#6b6b6b;">Copy this <span style="font-weight:bold; color:#dc2626;">${method}</span> account and make payment</p>
+              <p style="font-size:12px; color:#6b6b6b;">Copy this <span style="font-weight:bold; color:#dc2626;">${bank}</span> account and make payment</p>
               <div style="background:#f7f7f7; border-radius:8px; padding:12px; margin-top:8px;">
                 <p style="font-size:12px; color:#6b6b6b;">Total Amount:</p>
                 <p style="font-size:24px; font-weight:900; color:${GOLD};">RWF ${amount}</p>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
                   <div>
-                    <p style="font-size:12px; color:#6b6b6b;">${method} Account:</p>
-                    <p style="font-size:20px; font-weight:700; color:${GOLD};">${bank.number}</p>
+                    <p style="font-size:12px; color:#6b6b6b;">${bank} Account:</p>
+                    <p style="font-size:20px; font-weight:700; color:${GOLD};">${bankAccount}</p>
                   </div>
-                  <button onclick="navigator.clipboard.writeText('${bank.number}'); window.toastSuccess('Copied!')" style="background:none; border:none; font-size:20px; color:#999; cursor:pointer;">⧉</button>
+                  <button onclick="navigator.clipboard.writeText('${bankAccount}'); window.toastSuccess('Copied!')" style="background:none; border:none; font-size:20px; color:#999; cursor:pointer;">⧉</button>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
                   <div>
                     <p style="font-size:12px; color:#6b6b6b;">Account Name:</p>
-                    <p style="font-size:16px; font-weight:600; color:${GOLD};">${bank.name}</p>
+                    <p style="font-size:16px; font-weight:600; color:${GOLD};">${bankName}</p>
                   </div>
-                  <button onclick="navigator.clipboard.writeText('${bank.name}'); window.toastSuccess('Copied!')" style="background:none; border:none; font-size:20px; color:#999; cursor:pointer;">⧉</button>
+                  <button onclick="navigator.clipboard.writeText('${bankName}'); window.toastSuccess('Copied!')" style="background:none; border:none; font-size:20px; color:#999; cursor:pointer;">⧉</button>
                 </div>
               </div>
               <a href="tel:${ussd}" style="display:block; width:100%; background:${GOLD}; color:#fff; border:none; border-radius:30px; padding:14px; font-weight:700; text-align:center; text-decoration:none; margin-top:12px;">Click to pay</a>
               <p style="text-align:center; color:${GOLD}; font-size:14px; margin-top:6px;">${ussd}</p>
             </div>
-
             <div style="background:#fff; border-radius:16px; padding:16px; border:2px solid ${GOLD}; margin-bottom:16px;">
               <p style="font-weight:600; color:#343434;">Payment completed?</p>
               <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
@@ -138,15 +138,13 @@ export async function renderRecharge() {
               <p style="font-size:11px; color:#6b6b6b; margin-top:4px;">The payment is expected to be successful in 2-10 minutes. Click to refresh the results.</p>
               ${orderId ? `<p style="font-size:13px; color:#16a34a; font-weight:600; margin-top:6px;">Status: Processing · Order ${orderId}</p>` : ''}
             </div>
-
             <div style="background:#fff; border-radius:16px; padding:16px; border:2px solid ${GOLD}; margin-bottom:16px;">
               <p style="font-size:12px; color:#6b6b6b;">Your payment account:</p>
               <p style="font-size:16px; font-weight:600; color:#343434;">${account}</p>
-              <p style="font-size:14px; font-weight:600; color:#343434;">${holderName}</p>
+              <p style="font-size:16px; font-weight:600; color:#343434;">${holderName}</p>
             </div>
-
-            <button onclick="window.location.hash='records'" style="width:100%; background:${GOLD}; color:#fff; border:none; border-radius:30px; padding:14px; font-weight:700; cursor:pointer; margin-bottom:10px;">View recharge history</button>
-            <button onclick="window.location.hash='home'" style="width:100%; background:transparent; border:2px solid ${GOLD}; color:${GOLD_DARK}; border-radius:30px; padding:14px; font-weight:700; cursor:pointer;">Back to home</button>
+            <button onclick="window.location.hash='records'" style="width:100%; background:transparent; border:2px solid ${GOLD}; color:${GOLD_DARK}; border-radius:30px; padding:12px; font-weight:700; cursor:pointer; margin-bottom:10px;">View recharge history</button>
+            <button onclick="window.location.hash='home'" style="width:100%; background:${GOLD}; color:#fff; border:none; border-radius:30px; padding:14px; font-weight:700; cursor:pointer;">Back to home</button>
           </div>
         </div>
       `;
@@ -168,6 +166,12 @@ export async function renderRecharge() {
         amount = parseFloat(e.target.value) || 0;
         render();
       });
+      document.querySelectorAll('.bank-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          bank = btn.dataset.bank;
+          render();
+        });
+      });
       document.getElementById('confirm-amount').addEventListener('click', () => {
         if (amount < MIN) { toastError('Minimum amount is RWF 6000'); return; }
         step = 2;
@@ -176,17 +180,17 @@ export async function renderRecharge() {
     } else if (step === 2) {
       document.querySelectorAll('.method-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          method = btn.dataset.method;
+          paymentMethod = btn.dataset.method;
           render();
         });
       });
       document.getElementById('confirm-pay').addEventListener('click', async () => {
         account = document.getElementById('pay-account').value.trim();
         holderName = document.getElementById('pay-holder').value.trim();
-        if (!account) { toastError('Please enter your payment account'); return; }
+        if (!account) { toastError('Please enter your payment account number'); return; }
         if (!holderName) { toastError('Please enter the account holder name'); return; }
         try {
-          const res = await requestRecharge({ amount, method, account, holderName });
+          const res = await requestRecharge({ amount, bank, paymentMethod, account, holderName });
           orderId = res.pendingId || 'AP' + Date.now().toString().slice(-8);
           step = 3;
           render();
@@ -196,6 +200,7 @@ export async function renderRecharge() {
       });
     } else if (step === 3) {
       document.getElementById('refresh-pay').addEventListener('click', () => {
+        // Redirect to records page to show pending status
         window.location.hash = 'records';
       });
     }
