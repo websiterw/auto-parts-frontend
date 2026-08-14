@@ -3,6 +3,7 @@ import { toastError, toastSuccess } from '../api.js';
 
 export function renderRegister() {
   const app = document.getElementById('app');
+  // Read code from URL query string (e.g., ?code=ABC12)
   const urlParams = new URLSearchParams(window.location.search);
   const code = urlParams.get('code') || '';
 
