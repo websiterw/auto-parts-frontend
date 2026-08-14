@@ -47,7 +47,7 @@ export function renderCustomerService() {
 
   // Telegram links – replace with your actual URLs
   document.getElementById('cs-telegram-service').addEventListener('click', () => {
-    window.open('@styllehouse_help', '_blank');
+    window.open('https://t.me/@styllehouse_help', '_blank');
   });
   document.getElementById('cs-telegram-group').addEventListener('click', () => {
     window.open('https://t.me/+jKhLQ3z8ZYM2OGVk', '_blank');
