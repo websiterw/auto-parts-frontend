@@ -1,4 +1,4 @@
-import { requestWithdrawal, getMe } from '../api.js';
+import { requestWithdrawal, getMe, apiCall } from '../api.js';
 import { toastError, toastSuccess } from '../api.js';
 
 export async function renderWithdraw() {
@@ -11,6 +11,8 @@ export async function renderWithdraw() {
   let amount = 0;
   const MIN = 3000;
   const FEE = 0.2;
+  const GOLD = '#d99b1c';
+  const GOLD_DARK = '#b8860b';
   let submitted = false;
   let orderId = '';
 
@@ -24,60 +26,62 @@ export async function renderWithdraw() {
   function render() {
     if (submitted) {
       app.innerHTML = `
-        <div class="hero" style="background: var(--green);">
-          <div class="hero-overlay"></div>
-          <div class="hero-title">WITHDRAWAL</div>
+        <div style="position:relative; width:100%; height:180px; background: #22c55e;">
+          <img src="assets/images/withdraw-banner.png" alt="Withdraw" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'">
+          <div style="position:absolute; inset:0; background:rgba(0,0,0,0.25);"></div>
+          <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:28px; font-weight:900; letter-spacing:2px; text-shadow:0 2px 10px rgba(0,0,0,0.3);">WITHDRAWAL</div>
         </div>
-        <div class="px-4 -mt-6">
-          <div class="card text-center">
-            <span class="text-2xl">⏳</span>
-            <p class="text-green-600 font-bold text-lg">Processing</p>
-            <p class="text-muted text-sm">Your withdrawal of RWF ${amount} has been received. Withdrawals arrive within 4-24 hours.</p>
+        <div style="padding:0 16px; margin-top:-20px;">
+          <div style="background:#fff; border-radius:16px; padding:20px; border:2px solid ${GOLD}; text-align:center;">
+            <span style="font-size:32px;">⏳</span>
+            <p style="color:#16a34a; font-weight:bold; font-size:18px; margin-top:8px;">Processing</p>
+            <p style="color:#6b6b6b; font-size:14px;">Your withdrawal of RWF ${amount} has been received. Withdrawals arrive within 4-24 hours.</p>
           </div>
-          <div class="card">
-            <p class="text-muted text-xs">Order ID: ${orderId}</p>
-            <p class="text-muted text-xs">Method: ${channel}</p>
-            <p class="text-muted text-xs">Account: ${phone}</p>
-            <p class="text-muted text-xs">Holder: ${holder}</p>
-            <p class="text-muted text-xs">Fee (20%): RWF ${(amount * FEE).toFixed(2)}</p>
-            <p class="text-muted text-xs">Received: RWF ${(amount * (1 - FEE)).toFixed(2)}</p>
-            <p class="text-green-600 font-bold text-xs">Status: Processing</p>
+          <div style="background:#fff; border-radius:16px; padding:16px; border:2px solid ${GOLD}; margin-top:12px;">
+            <p style="color:#6b6b6b; font-size:12px;">Order ID: ${orderId}</p>
+            <p style="color:#6b6b6b; font-size:12px;">Method: ${channel}</p>
+            <p style="color:#6b6b6b; font-size:12px;">Account: ${phone}</p>
+            <p style="color:#6b6b6b; font-size:12px;">Holder: ${holder}</p>
+            <p style="color:#6b6b6b; font-size:12px;">Fee (20%): RWF ${(amount * FEE).toFixed(2)}</p>
+            <p style="color:#6b6b6b; font-size:12px;">Received: RWF ${(amount * (1 - FEE)).toFixed(2)}</p>
+            <p style="color:#16a34a; font-weight:600; font-size:12px;">Status: Processing</p>
           </div>
-          <button class="btn" onclick="window.location.hash='home'">Back to home</button>
+          <button onclick="window.location.hash='home'" style="width:100%; background:${GOLD}; color:#fff; border:none; border-radius:30px; padding:14px; font-weight:700; font-size:16px; cursor:pointer; margin-top:16px;">Back to home</button>
         </div>
       `;
       return;
     }
 
     app.innerHTML = `
-      <div class="hero" style="background: var(--green);">
-        <div class="hero-overlay"></div>
-        <div class="hero-title">WITHDRAWAL</div>
+      <div style="position:relative; width:100%; height:180px; background: #22c55e;">
+        <img src="assets/images/withdraw-banner.png" alt="Withdraw" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'">
+        <div style="position:absolute; inset:0; background:rgba(0,0,0,0.25);"></div>
+        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:28px; font-weight:900; letter-spacing:2px; text-shadow:0 2px 10px rgba(0,0,0,0.3);">WITHDRAWAL</div>
       </div>
-      <div class="px-4 -mt-6">
-        ${!hasProduct ? `<div class="bg-red-50 border border-red-500 text-red-500 text-sm font-semibold p-3 rounded-md mb-4">You must buy a product before you can withdraw.</div>` : ''}
-        <p class="font-semibold text-sm">My balance</p>
-        <div class="card flex items-center gap-4">
-          <span class="text-2xl">📈</span>
-          <span class="flex-1 text-center text-2xl font-bold text-green-600">RWF ${balance.toFixed(2)}</span>
+      <div style="padding:0 16px; margin-top:-20px;">
+        ${!hasProduct ? `<div style="background:#fdeaea; border:2px solid #dc2626; border-radius:12px; padding:12px; color:#dc2626; font-weight:600; font-size:14px; text-align:center; margin-bottom:16px;">You must buy a product before you can withdraw.</div>` : ''}
+        <p style="font-weight:600; color:#343434; margin-bottom:4px;">My balance</p>
+        <div style="background:#fff; border-radius:12px; padding:16px; border:2px solid ${GOLD}; display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+          <span style="font-size:24px;">📈</span>
+          <span style="flex:1; text-align:center; font-size:22px; font-weight:900; color:${GOLD_DARK};">RWF ${balance.toFixed(2)}</span>
         </div>
-        <p class="font-semibold text-sm mt-4">Please select your bank card</p>
-        <button id="bank-picker" class="card flex items-center gap-3 w-full text-left">
-          <span class="text-lg">💳</span>
-          <span class="flex-1 text-sm" style="color: ${phone ? '#343434' : '#8a8a8a'};">${phone ? `${channel} · ${phone} · ${holder}` : '_ _ _ _ _ _ - _ _ _ _ _ _ _ _ _ _ _ _ _'}</span>
-          <span class="text-gray-400">›</span>
+        <p style="font-weight:600; color:#343434; margin-bottom:4px;">Please select your bank card</p>
+        <button id="bank-picker" style="width:100%; background:#fff; border:2px solid ${GOLD}; border-radius:12px; padding:16px; display:flex; align-items:center; gap:12px; cursor:pointer; text-align:left; margin-bottom:16px;">
+          <span style="font-size:20px;">💳</span>
+          <span style="flex:1; font-size:14px; color:${phone ? '#343434' : '#8a8a8a'};">${phone ? `${channel} · ${phone} · ${holder}` : '_ _ _ _ _ _ - _ _ _ _ _ _ _ _ _ _ _ _ _'}</span>
+          <span style="color:#aaa; font-size:18px;">›</span>
         </button>
-        <p class="font-semibold text-sm mt-4">Enter withdrawal amount</p>
-        <div class="flex items-center border-2 rounded-md px-4 py-3" style="border-color: var(--green);">
-          <span class="text-muted mr-2">RWF</span>
-          <input id="withdraw-amount" type="number" placeholder="Please enter amount" class="flex-1 outline-none bg-transparent">
+        <p style="font-weight:600; color:#343434; margin-bottom:4px;">Enter withdrawal amount</p>
+        <div style="display:flex; align-items:center; border:2px solid ${GOLD}; border-radius:8px; padding:10px 16px; margin-bottom:16px;">
+          <span style="color:#6b6b6b; margin-right:8px;">RWF</span>
+          <input id="withdraw-amount" type="number" placeholder="Please enter amount" style="flex:1; outline:none; border:none; background:transparent; font-size:16px; color:#343434;">
         </div>
-        <div class="flex justify-between text-sm text-muted mt-2">
-          <span>Received: <span id="received-display" class="text-green-600">RWF 0</span></span>
+        <div style="display:flex; justify-content:space-between; font-size:14px; color:#6b6b6b; margin-bottom:16px;">
+          <span>Received: <span id="received-display" style="color:${GOLD_DARK}; font-weight:700;">RWF 0</span></span>
           <span>Fee rate: 20%</span>
         </div>
-        <button id="withdraw-submit" class="btn mt-4" style="background: var(--green);">Confirm</button>
-        <ol class="text-xs text-muted mt-4 space-y-1">
+        <button id="withdraw-submit" style="width:100%; background:${hasProduct ? GOLD : '#d9d9d9'}; color:#fff; border:none; border-radius:30px; padding:14px; font-weight:700; font-size:16px; cursor:${hasProduct ? 'pointer' : 'default'}; margin-bottom:16px;" ${!hasProduct ? 'disabled' : ''}>Confirm</button>
+        <ol style="font-size:12px; color:#6b6b6b; line-height:1.6; padding-left:20px;">
           <li>1. Minimum withdrawal: RWF 3000.</li>
           <li>2. Fee is 20% of the amount.</li>
           <li>3. Arrives within 4-24 hours.</li>
@@ -94,24 +98,24 @@ export async function renderWithdraw() {
     });
 
     document.getElementById('bank-picker').addEventListener('click', () => {
-      // Simple popup for bank selection (we'll do a small modal)
+      // Bank binding modal
       const modal = document.createElement('div');
-      modal.className = 'fixed inset-0 z-50 bg-black/50 flex items-center justify-center px-5';
+      modal.style.cssText = 'position:fixed; inset:0; z-index:50; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; padding:20px;';
       modal.innerHTML = `
-        <div class="bg-white rounded-xl p-5 w-full max-w-sm">
-          <p class="text-center font-semibold text-sm">Bind your withdrawal account</p>
-          <div class="grid grid-cols-2 gap-2 mt-3">
-            <button class="channel-btn border-2 rounded-md py-2 text-sm font-semibold" data-channel="MTN" style="border-color: ${channel === 'MTN' ? 'var(--green)' : '#e5e5e5'}; background: ${channel === 'MTN' ? '#f3fdf6' : '#fff'};">MTN</button>
-            <button class="channel-btn border-2 rounded-md py-2 text-sm font-semibold" data-channel="Airtel" style="border-color: ${channel === 'Airtel' ? 'var(--green)' : '#e5e5e5'}; background: ${channel === 'Airtel' ? '#f3fdf6' : '#fff'};">Airtel</button>
+        <div style="background:#fff; border-radius:20px; padding:24px; width:100%; max-width:400px;">
+          <p style="text-align:center; font-weight:900; font-size:16px; color:#343434; margin-bottom:16px;">Bind your withdrawal account</p>
+          <div style="display:flex; gap:10px; margin-bottom:12px;">
+            <button class="channel-btn" data-channel="MTN" style="flex:1; border:2px solid ${channel === 'MTN' ? GOLD : '#e5e5e5'}; background:${channel === 'MTN' ? '#fffaf0' : '#fff'}; border-radius:8px; padding:12px; font-weight:600; cursor:pointer; color:#343434;">MTN</button>
+            <button class="channel-btn" data-channel="Airtel" style="flex:1; border:2px solid ${channel === 'Airtel' ? GOLD : '#e5e5e5'}; background:${channel === 'Airtel' ? '#fffaf0' : '#fff'}; border-radius:8px; padding:12px; font-weight:600; cursor:pointer; color:#343434;">Airtel</button>
           </div>
-          <div class="border-2 rounded-md px-4 py-3 mt-3" style="border-color: #e5e5e5;">
-            <input id="phone-input" type="text" placeholder="07XXXXXXXX" class="w-full outline-none bg-transparent text-sm" value="${phone}">
+          <div style="border:2px solid #e5e5e5; border-radius:8px; padding:10px 14px; margin-bottom:10px;">
+            <input id="phone-input" type="text" placeholder="07XXXXXXXX" style="width:100%; outline:none; border:none; background:transparent; font-size:14px; color:#343434;" value="${phone}">
           </div>
-          <div class="border-2 rounded-md px-4 py-3 mt-2" style="border-color: #e5e5e5;">
-            <input id="holder-input" type="text" placeholder="Account holder name" class="w-full outline-none bg-transparent text-sm" value="${holder}">
+          <div style="border:2px solid #e5e5e5; border-radius:8px; padding:10px 14px; margin-bottom:10px;">
+            <input id="holder-input" type="text" placeholder="Account holder name" style="width:100%; outline:none; border:none; background:transparent; font-size:14px; color:#343434;" value="${holder}">
           </div>
-          <p class="text-xs text-muted mt-1">The name must match the mobile money account owner.</p>
-          <button id="save-bank" class="btn mt-3">Save</button>
+          <p style="font-size:11px; color:#6b6b6b; margin-bottom:16px;">The name must match the mobile money account owner.</p>
+          <button id="save-bank" style="width:100%; background:${GOLD}; color:#fff; border:none; border-radius:30px; padding:14px; font-weight:700; cursor:pointer;">Save</button>
         </div>
       `;
       document.body.appendChild(modal);
@@ -120,12 +124,16 @@ export async function renderWithdraw() {
         btn.addEventListener('click', () => {
           channel = btn.dataset.channel;
           modal.remove();
-          render();
+          render(); // re-render to update button style
         });
       });
       modal.querySelector('#save-bank').addEventListener('click', () => {
         phone = document.getElementById('phone-input').value.trim();
         holder = document.getElementById('holder-input').value.trim();
+        if (!phone || !holder) {
+          toastError('Please fill both phone and holder name.');
+          return;
+        }
         modal.remove();
         render();
       });
