@@ -22,6 +22,25 @@ window.toastSuccess = toastSuccess;
 window.toastInfo = toastInfo;
 window.showToast = showToast;
 
+// ============================================================
+// REFERRAL CODE PRESERVATION
+// ============================================================
+// Read the code from the full URL before the router changes anything
+const fullUrl = window.location.href;
+const match = fullUrl.match(/[?&]code=([^&]+)/);
+if (match) {
+  window._referralCode = match[1];
+  console.log('[app.js] Referral code captured:', window._referralCode);
+} else {
+  // Also check the hash
+  const hash = window.location.hash;
+  const hashMatch = hash.match(/[?&]code=([^&]+)/);
+  if (hashMatch) {
+    window._referralCode = hashMatch[1];
+    console.log('[app.js] Referral code from hash:', window._referralCode);
+  }
+}
+
 const routes = {
   register: renderRegister,
   login: renderLogin,
@@ -37,6 +56,11 @@ const routes = {
 
 function loadPage() {
   let hash = window.location.hash.replace('#', '') || 'register';
+  // Remove any query string from the hash if present
+  if (hash.includes('?')) {
+    hash = hash.split('?')[0];
+  }
+
   const token = localStorage.getItem('token');
   if (!token && hash !== 'register' && hash !== 'login') {
     hash = 'register';
