@@ -1,68 +1,80 @@
 import { getTransactions } from '../api.js';
+import { toastError, toastSuccess } from '../api.js';
 
 export async function renderRecords() {
   const app = document.getElementById('app');
   let txs = [];
+  let currentTab = 'recharge'; // 'recharge', 'withdrawal', 'income'
+
   try {
     txs = await getTransactions();
-  } catch (e) {}
+  } catch (err) {
+    toastError('Failed to load records');
+  }
 
-  app.innerHTML = `
-    <div class="hero" style="background: var(--green);">
-      <div class="hero-overlay"></div>
-      <div class="hero-title">RECORDS</div>
-    </div>
-    <div class="px-4 -mt-6">
-      <div class="bg-white rounded-t-2xl shadow-sm p-4">
-        <div class="flex gap-4 border-b pb-2">
-          <button class="tab-btn font-bold text-sm" data-tab="recharge" style="color: var(--green-dark); border-bottom: 2px solid var(--green);">Recharge</button>
-          <button class="tab-btn font-bold text-sm" data-tab="withdrawal" style="color: #8a8a8a;">Withdrawal</button>
-          <button class="tab-btn font-bold text-sm" data-tab="income" style="color: #8a8a8a;">Income</button>
+  const GOLD = '#d99b1c';
+  const GOLD_DARK = '#b8860b';
+
+  function render() {
+    const filtered = txs.filter(t => t.type === currentTab);
+    const total = filtered.reduce((sum, t) => sum + t.amount, 0);
+
+    app.innerHTML = `
+      <div style="position:relative; width:100%; height:180px; background: #22c55e;">
+        <img src="assets/images/records-banner.png" alt="Records" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'">
+        <div style="position:absolute; inset:0; background:rgba(0,0,0,0.25);"></div>
+        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:28px; font-weight:900; letter-spacing:2px; text-shadow:0 2px 10px rgba(0,0,0,0.3);">RECORDS</div>
+      </div>
+      <div style="padding:0 16px; margin-top:-20px;">
+        <!-- Tabs -->
+        <div style="display:flex; background:#fff; border-radius:16px; border:2px solid ${GOLD}; overflow:hidden; margin-bottom:16px;">
+          ${['recharge', 'withdrawal', 'income'].map(tab => `
+            <button class="records-tab" data-tab="${tab}" style="flex:1; padding:12px; border:none; background:${currentTab === tab ? GOLD : 'transparent'}; color:${currentTab === tab ? '#fff' : '#343434'}; font-weight:700; font-size:14px; cursor:pointer; transition:0.2s;">
+              ${tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          `).join('')}
         </div>
-        <div id="records-list" class="mt-4 space-y-3">
-          ${txs.filter(t => t.type === 'recharge').slice(0, 10).map(t => `
-            <div class="bg-white rounded-lg p-3 border">
-              <div class="flex justify-between">
-                <span class="font-bold">${t.type}</span>
-                <span class="font-bold text-green-600">+RWF ${t.amount}</span>
+
+        <!-- Stats -->
+        <div style="background:#fff; border-radius:12px; padding:12px; border:2px solid ${GOLD}; text-align:center; margin-bottom:16px;">
+          <p style="color:#6b6b6b; font-size:12px;">Total ${currentTab}</p>
+          <p style="font-size:22px; font-weight:900; color:${GOLD_DARK};">RWF ${total.toFixed(2)}</p>
+        </div>
+
+        <!-- Records list -->
+        <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
+          ${filtered.length === 0 ? `
+            <div style="background:#fff; border-radius:12px; padding:20px; border:2px solid ${GOLD}; text-align:center; color:#6b6b6b;">
+              No ${currentTab} records.
+            </div>
+          ` : filtered.map(t => `
+            <div style="background:#fff; border-radius:12px; padding:12px; border:2px solid ${GOLD};">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-weight:700; color:#343434;">${t.type.charAt(0).toUpperCase() + t.type.slice(1)}</span>
+                <span style="font-weight:900; color:${t.amount >= 0 ? '#16a34a' : '#dc2626'};">${t.amount >= 0 ? '+' : ''}RWF ${t.amount.toFixed(2)}</span>
               </div>
-              <div class="text-xs text-muted">Order: ${t.reference || t._id}</div>
-              <div class="text-xs text-muted">Method: ${t.method || '-'}</div>
-              <div class="text-xs text-muted">Time: ${new Date(t.createdAt).toLocaleString()}</div>
-              <div class="text-xs font-semibold" style="color: ${t.status === 'success' ? 'var(--green)' : 'var(--red)'};">${t.status || 'success'}</div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-top:6px; font-size:12px; color:#6b6b6b;">
+                <span>Order: ${t.reference || t._id}</span>
+                <span>Method: ${t.method || '-'}</span>
+                <span>Date: ${new Date(t.createdAt).toLocaleString()}</span>
+                <span style="font-weight:600; color:${t.status === 'success' ? '#16a34a' : '#dc2626'};">Status: ${t.status || 'success'}</span>
+              </div>
             </div>
           `).join('')}
-          ${txs.filter(t => t.type === 'recharge').length === 0 ? '<p class="text-muted text-sm">No recharge records.</p>' : ''}
         </div>
-      </div>
-    </div>
-  `;
 
-  // Tab switching
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab-btn').forEach(b => { b.style.color = '#8a8a8a'; b.style.borderBottom = 'none'; });
-      btn.style.color = 'var(--green-dark)';
-      btn.style.borderBottom = '2px solid var(--green)';
-      const tab = btn.dataset.tab;
-      const list = document.getElementById('records-list');
-      const filtered = txs.filter(t => t.type === tab);
-      if (filtered.length === 0) {
-        list.innerHTML = `<p class="text-muted text-sm">No ${tab} records.</p>`;
-        return;
-      }
-      list.innerHTML = filtered.map(t => `
-        <div class="bg-white rounded-lg p-3 border">
-          <div class="flex justify-between">
-            <span class="font-bold">${t.type}</span>
-            <span class="font-bold ${t.type === 'withdrawal' ? 'text-red-500' : 'text-green-600'}">${t.type === 'withdrawal' ? '-' : '+'}RWF ${t.amount}</span>
-          </div>
-          <div class="text-xs text-muted">Order: ${t.reference || t._id}</div>
-          <div class="text-xs text-muted">Method: ${t.method || '-'}</div>
-          <div class="text-xs text-muted">Time: ${new Date(t.createdAt).toLocaleString()}</div>
-          <div class="text-xs font-semibold" style="color: ${t.status === 'success' ? 'var(--green)' : 'var(--red)'};">${t.status || 'success'}</div>
-        </div>
-      `).join('');
+        <button onclick="window.location.hash='home'" style="width:100%; background:${GOLD}; color:#fff; border:none; border-radius:30px; padding:14px; font-weight:700; font-size:16px; cursor:pointer; margin-bottom:20px;">Back to home</button>
+      </div>
+    `;
+
+    // Tab switching
+    document.querySelectorAll('.records-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentTab = btn.dataset.tab;
+        render();
+      });
     });
-  });
+  }
+
+  render();
 }
