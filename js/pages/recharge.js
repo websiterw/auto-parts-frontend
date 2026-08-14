@@ -9,8 +9,6 @@ export async function renderRecharge() {
   let account = '';
   let holderName = '';
   let orderId = '';
-  let timerInterval = null;
-  let timeLeft = 180; // 3 minutes
 
   const presetAmounts = [6000, 12000, 25000, 50000, 100000, 250000, 500000, 1000000];
   const MIN = 6000;
@@ -60,10 +58,10 @@ export async function renderRecharge() {
           <button id="confirm-amount" style="width:100%; background:${amount >= MIN ? GOLD : '#d9d9d9'}; color:#fff; border:none; border-radius:30px; padding:14px; font-weight:700; font-size:16px; cursor:${amount >= MIN ? 'pointer' : 'default'}; margin-bottom:12px;" ${amount < MIN ? 'disabled' : ''}>Confirm</button>
           <button onclick="window.location.hash='records'" style="width:100%; background:transparent; border:2px solid ${GOLD}; color:${GOLD_DARK}; border-radius:30px; padding:12px; font-weight:700; font-size:14px; cursor:pointer; margin-bottom:16px;">View recharge history</button>
           <ol style="font-size:12px; color:#6b6b6b; line-height:1.6; padding-left:20px;">
-            <li>1. The minimum recharge amount is RWF6000. Recharges below this amount will not be credited to your account.</li>
-            <li>2. Please use your latest account number for each recharge to avoid using expired account information.</li>
-            <li>3. Please carefully read the payment gateway's instructions and strictly follow them.</li>
-            <li>4. If your recharge is not credited to your account immediately after the transfer, please upload your payment information on the recharge page or contact official customer service for assistance.</li>
+            <li>1. The minimum recharge amount is RWF6000.</li>
+            <li>2. Please use your latest account number for each recharge.</li>
+            <li>3. Carefully read the payment instructions.</li>
+            <li>4. If not credited, contact customer service.</li>
           </ol>
         </div>
       `;
@@ -83,6 +81,7 @@ export async function renderRecharge() {
               <span style="color:${GOLD}; font-weight:600; margin-right:8px;">+250</span>
               <input id="pay-account" type="text" placeholder="Please enter your payment account" style="flex:1; outline:none; border:none; background:transparent; font-size:14px; color:#343434;">
             </div>
+            <!-- NEW: Account Holder Name -->
             <div style="display:flex; align-items:center; border:2px solid #e0e0e0; border-radius:8px; padding:10px 14px; margin-top:8px;">
               <span style="color:${GOLD}; font-weight:600; margin-right:8px;">👤</span>
               <input id="pay-holder" type="text" placeholder="Account holder name" style="flex:1; outline:none; border:none; background:transparent; font-size:14px; color:#343434;">
@@ -146,8 +145,8 @@ export async function renderRecharge() {
               <p style="font-size:14px; font-weight:600; color:#343434;">${holderName}</p>
             </div>
 
-            <button onclick="window.location.hash='records'" style="width:100%; background:transparent; border:2px solid ${GOLD}; color:${GOLD_DARK}; border-radius:30px; padding:12px; font-weight:700; cursor:pointer; margin-bottom:10px;">View recharge history</button>
-            <button onclick="window.location.hash='home'" style="width:100%; background:${GOLD}; color:#fff; border:none; border-radius:30px; padding:14px; font-weight:700; cursor:pointer;">Back to home</button>
+            <button onclick="window.location.hash='records'" style="width:100%; background:${GOLD}; color:#fff; border:none; border-radius:30px; padding:14px; font-weight:700; cursor:pointer; margin-bottom:10px;">View recharge history</button>
+            <button onclick="window.location.hash='home'" style="width:100%; background:transparent; border:2px solid ${GOLD}; color:${GOLD_DARK}; border-radius:30px; padding:14px; font-weight:700; cursor:pointer;">Back to home</button>
           </div>
         </div>
       `;
@@ -184,7 +183,7 @@ export async function renderRecharge() {
       document.getElementById('confirm-pay').addEventListener('click', async () => {
         account = document.getElementById('pay-account').value.trim();
         holderName = document.getElementById('pay-holder').value.trim();
-        if (!account) { toastError('Please enter your payment account number'); return; }
+        if (!account) { toastError('Please enter your payment account'); return; }
         if (!holderName) { toastError('Please enter the account holder name'); return; }
         try {
           const res = await requestRecharge({ amount, method, account, holderName });
@@ -197,7 +196,6 @@ export async function renderRecharge() {
       });
     } else if (step === 3) {
       document.getElementById('refresh-pay').addEventListener('click', () => {
-        // Redirect to records page to show pending status
         window.location.hash = 'records';
       });
     }
