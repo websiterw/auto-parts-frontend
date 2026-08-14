@@ -4,7 +4,7 @@ import { toastError, toastSuccess } from '../api.js';
 export async function renderRecords() {
   const app = document.getElementById('app');
   let txs = [];
-  let currentTab = 'recharge'; // 'recharge', 'withdrawal', 'income'
+  let currentTab = 'recharge';
 
   try {
     txs = await getTransactions();
@@ -20,12 +20,12 @@ export async function renderRecords() {
     const total = filtered.reduce((sum, t) => sum + t.amount, 0);
 
     app.innerHTML = `
-      <div style="position:relative; width:100%; height:180px; background: #22c55e;">
+      <div style="position:relative; width:100%; height:160px; background: #22c55e; overflow:hidden;">
         <img src="assets/images/records-banner.png" alt="Records" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'">
         <div style="position:absolute; inset:0; background:rgba(0,0,0,0.25);"></div>
-        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:28px; font-weight:900; letter-spacing:2px; text-shadow:0 2px 10px rgba(0,0,0,0.3);">RECORDS</div>
+        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:26px; font-weight:900; letter-spacing:2px; text-shadow:0 2px 10px rgba(0,0,0,0.3);">RECORDS</div>
       </div>
-      <div style="padding:0 16px; margin-top:-20px;">
+      <div style="padding:0 16px; margin-top:-10px;">
         <!-- Tabs -->
         <div style="display:flex; background:#fff; border-radius:16px; border:2px solid ${GOLD}; overflow:hidden; margin-bottom:16px;">
           ${['recharge', 'withdrawal', 'income'].map(tab => `
