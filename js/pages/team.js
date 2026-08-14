@@ -5,6 +5,11 @@ export async function renderTeam() {
   const user = JSON.parse(localStorage.getItem('user')) || {};
   const data = await getTeamData().catch(() => ({ totalUsers: 0, totalRewards: 0, code: user.myReferralCode || '' }));
 
+  // Ensure we have a referral code
+  const referralCode = data.code || user.myReferralCode || '';
+  // Build the invitation link
+  const inviteLink = `${window.location.origin}/#register?code=${referralCode}`;
+
   app.innerHTML = `
     <div style="position:relative; width:100%; height:180px; background: #22c55e;">
       <img src="assets/images/team-banner.png" alt="Team" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'">
@@ -24,9 +29,9 @@ export async function renderTeam() {
       </div>
       <div style="background:#fff; border-radius:16px; padding:16px; border:2px solid #22c55e; margin-bottom:16px;">
         <p style="font-weight:900; color:#16a34a;">My invitation code</p>
-        <p style="font-size:24px; font-weight:900; letter-spacing:2px; color:#dc2626;">${data.code || user.myReferralCode || '------'}</p>
-        <p style="font-size:12px; word-break:break-all; margin-top:8px; color:#16a34a;">${window.location.origin}/#register?code=${data.code || ''}</p>
-        <button class="btn" style="margin-top:8px; background:#22c55e; color:#fff; border:none; border-radius:30px; padding:10px 16px; font-weight:700; cursor:pointer; width:100%;" onclick="navigator.clipboard.writeText('${window.location.origin}/#register?code=${data.code || ''}'); window.toastSuccess('Link copied!')">Copy invitation link</button>
+        <p style="font-size:24px; font-weight:900; letter-spacing:2px; color:#dc2626;">${referralCode || '------'}</p>
+        <p style="font-size:12px; word-break:break-all; margin-top:8px; color:#16a34a;">${inviteLink}</p>
+        <button onclick="navigator.clipboard.writeText('${inviteLink}'); window.toastSuccess('Link copied!')" style="width:100%; background:#22c55e; color:#fff; border:none; border-radius:30px; padding:10px; font-weight:700; cursor:pointer; margin-top:8px;">Copy invitation link</button>
       </div>
       <div style="background:#fff; border-radius:16px; padding:16px; border:2px solid #22c55e;">
         <p style="font-weight:900; margin-bottom:8px; color:#16a34a;">How the team works</p>
