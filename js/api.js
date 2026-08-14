@@ -113,6 +113,18 @@ export const redeemGift = (code) =>
     body: JSON.stringify({ code })
   });
 
+// ... (other code)
+
+export const getRecharges = () => apiCall('/recharges');
+
+export const requestRecharge = (data) =>
+  apiCall('/recharges/request', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  });
+
+// ... (other code)
+
 // ============================================
 // TOAST NOTIFICATIONS
 // ============================================
