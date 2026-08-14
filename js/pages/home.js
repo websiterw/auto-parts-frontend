@@ -51,7 +51,7 @@ export async function renderHome() {
           <span style="width:40px; height:40px; border-radius:50%; background:#22c55e; display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px;"><i class="fas fa-check"></i></span>
           <span style="font-size:10px; font-weight:700; color:#16a34a;">Check in</span>
         </button>
-        <button onclick="window.open('https://t.me/your_group', '_blank')" style="display:flex; flex-direction:column; align-items:center; gap:4px; background:none; border:none; cursor:pointer; padding:4px;">
+        <button onclick="window.location.hash='customerService'" style="display:flex; flex-direction:column; align-items:center; gap:4px; background:none; border:none; cursor:pointer; padding:4px;">
           <span style="width:40px; height:40px; border-radius:50%; background:#22c55e; display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px;"><i class="fas fa-headset"></i></span>
           <span style="font-size:10px; font-weight:700; color:#16a34a;">Help</span>
         </button>
@@ -108,7 +108,6 @@ export async function renderHome() {
       </div>
       <button onclick="window.location.hash='product'" style="display:block; margin:0 16px 16px; width:calc(100% - 32px); background:transparent; border:2px solid #22c55e; border-radius:30px; padding:10px; font-weight:700; color:#16a34a; cursor:pointer;">See all products</button>
 
-      <!-- Animation keyframes -->
       <style>
         @keyframes ticker {
           from { transform: translateX(100%); }
