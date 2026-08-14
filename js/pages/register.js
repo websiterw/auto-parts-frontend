@@ -4,15 +4,26 @@ import { toastError, toastSuccess } from '../api.js';
 export function renderRegister() {
   const app = document.getElementById('app');
 
-  // ===== READ CODE FROM GLOBAL VARIABLE (set by app.js) =====
-  const referralCode = window._referralCode || '';
+  // ✅ Read code from the FULL URL (including hash)
+  const fullUrl = window.location.href; // e.g., "https://.../#register?code=HVOMU"
+  let referralCode = '';
 
-  // Also try to read from the full URL as a fallback
-  let finalCode = referralCode;
-  if (!finalCode) {
-    const fullUrl = window.location.href;
-    const match = fullUrl.match(/[?&]code=([^&]+)/);
-    if (match) finalCode = match[1];
+  // Try to extract code from the hash part first
+  const hashIndex = fullUrl.indexOf('#');
+  if (hashIndex !== -1) {
+    const hashPart = fullUrl.substring(hashIndex); // "#register?code=HVOMU"
+    const queryIndex = hashPart.indexOf('?');
+    if (queryIndex !== -1) {
+      const queryString = hashPart.substring(queryIndex + 1); // "code=HVOMU"
+      const params = new URLSearchParams(queryString);
+      referralCode = params.get('code') || '';
+    }
+  }
+
+  // Fallback: if not found in hash, try window.location.search
+  if (!referralCode) {
+    const params = new URLSearchParams(window.location.search);
+    referralCode = params.get('code') || '';
   }
 
   app.innerHTML = `
@@ -35,7 +46,7 @@ export function renderRegister() {
             <input id="reg-password2" type="password" placeholder="Re-enter password" style="flex:1; outline:none; border:none; background:transparent; color:#16a34a; font-size:16px;">
           </div>
           <div style="display:flex; align-items:center; border:2px solid #22c55e; border-radius:12px; padding:12px 16px;">
-            <input id="reg-invite" type="text" placeholder="Invitation code (optional)" value="${finalCode}" style="flex:1; outline:none; border:none; background:transparent; color:#16a34a; font-size:16px;">
+            <input id="reg-invite" type="text" placeholder="Invitation code (optional)" value="${referralCode}" style="flex:1; outline:none; border:none; background:transparent; color:#16a34a; font-size:16px;">
           </div>
         </div>
         <div style="text-align:right; margin-top:16px;">
@@ -47,6 +58,7 @@ export function renderRegister() {
     </div>
   `;
 
+  // --- Event listeners (unchanged) ---
   document.getElementById('register-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const account = document.getElementById('reg-account').value.trim();
