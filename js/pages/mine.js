@@ -3,12 +3,21 @@ import { toastError, toastSuccess } from '../api.js';
 
 export async function renderMine() {
   const app = document.getElementById('app');
-  const user = JSON.parse(localStorage.getItem('user')) || {};
-  const fresh = await getMe().catch(() => user);
-  const balance = fresh.balance || 0;
-  const income = fresh.cumulativeIncome || 0;
-  const code = fresh.myReferralCode || '';
-  const account = fresh.accountNumber || '';
+
+  // ✅ Always fetch fresh user data FIRST
+  let user = JSON.parse(localStorage.getItem('user')) || {};
+  try {
+    const fresh = await getMe();
+    user = fresh;
+    localStorage.setItem('user', JSON.stringify(user));
+  } catch (e) {
+    // fallback to cached user
+  }
+
+  const balance = user.balance || 0;
+  const income = user.cumulativeIncome || 0;
+  const code = user.myReferralCode || '';
+  const account = user.accountNumber || '';
 
   let productCount = 0;
   let dailyIncome = 0;
@@ -64,7 +73,7 @@ export async function renderMine() {
         <button class="btn" id="checkin-btn" style="background:#22c55e; color:#fff; border:none; border-radius:30px; padding:10px; font-weight:700; cursor:pointer;">Check in</button>
       </div>
 
-      <!-- Menu list with icons (left‑aligned) – NO "Join official group" -->
+      <!-- Menu list with icons (left‑aligned) -->
       <div style="background:#fff; border-radius:16px; border:2px solid #22c55e; overflow:hidden; margin-bottom:16px;">
         ${[
           { icon: 'fa-receipt', label: 'Recharge records', action: "window.location.hash='records'" },
