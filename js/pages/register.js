@@ -4,11 +4,13 @@ import { toastError, toastSuccess } from '../api.js';
 export function renderRegister() {
   const app = document.getElementById('app');
 
-  // ===== Read code from the FULL URL (including hash) =====
+  // ===== READ CODE FROM THE HASH (e.g. "#register?code=ABC12") =====
   let referralCode = '';
-  const fullUrl = window.location.href;
-  const match = fullUrl.match(/[?&]code=([^&]+)/);
-  if (match) referralCode = match[1];
+  const hash = window.location.hash; // "#register?code=ABC12"
+  if (hash.includes('?code=')) {
+    const match = hash.match(/[?&]code=([^&]+)/);
+    if (match) referralCode = match[1];
+  }
 
   app.innerHTML = `
     <div style="position:relative; width:100%; height:280px; background: #22c55e;">
