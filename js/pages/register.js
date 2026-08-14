@@ -4,8 +4,22 @@ import { toastError, toastSuccess } from '../api.js';
 export function renderRegister() {
   const app = document.getElementById('app');
 
-  // ===== READ CODE FROM GLOBAL VARIABLE (set in app.js) =====
-  const referralCode = window._referralCode || '';
+  // ===== METHOD 1: Read from global variable set by app.js =====
+  let referralCode = window._referralCode || '';
+
+  // ===== METHOD 2: Fallback – read from the full URL =====
+  if (!referralCode) {
+    const fullUrl = window.location.href;
+    const match = fullUrl.match(/[?&]code=([^&]+)/);
+    if (match) referralCode = match[1];
+  }
+
+  // ===== METHOD 3: Fallback – read from the hash =====
+  if (!referralCode) {
+    const hash = window.location.hash;
+    const match = hash.match(/[?&]code=([^&]+)/);
+    if (match) referralCode = match[1];
+  }
 
   app.innerHTML = `
     <div style="position:relative; width:100%; height:280px; background: #22c55e;">
