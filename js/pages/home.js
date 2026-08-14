@@ -3,7 +3,17 @@ import { toastError, toastSuccess } from '../api.js';
 
 export async function renderHome() {
   const app = document.getElementById('app');
-  const user = JSON.parse(localStorage.getItem('user')) || { balance: 0, cumulativeIncome: 0 };
+
+  // ✅ Always fetch fresh user data FIRST
+  let user = JSON.parse(localStorage.getItem('user')) || { balance: 0, cumulativeIncome: 0 };
+  try {
+    const fresh = await getMe();
+    user = fresh;
+    localStorage.setItem('user', JSON.stringify(user));
+  } catch (e) {
+    // fallback to cached user
+  }
+
   let team = { totalUsers: 0, totalRewards: 0 };
   let investments = [];
   let products = [];
