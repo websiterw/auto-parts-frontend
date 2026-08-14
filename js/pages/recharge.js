@@ -8,9 +8,13 @@ export async function renderRecharge() {
   let method = 'MTN';
   let account = '';
   let orderId = '';
+  let timerInterval = null;
+  let timeLeft = 180; // 3 minutes
 
   const presetAmounts = [6000, 12000, 25000, 50000, 100000, 250000, 500000, 1000000];
   const MIN = 6000;
+  const GOLD = '#d99b1c';
+  const GOLD_DARK = '#b8860b';
 
   // Fetch bank details from settings
   let bankDetails = { MTN: { number: '0785558168', name: 'Donat Munyempundu' }, Airtel: { number: '0732136268', name: 'Job Ntirandekura' } };
@@ -28,61 +32,58 @@ export async function renderRecharge() {
     let html = '';
     if (step === 1) {
       html = `
-        <div class="hero" style="background: var(--green);">
-          <div class="hero-overlay"></div>
-          <div class="hero-title">RECHARGE</div>
+        <div style="position:relative; width:100%; height:180px; background: #22c55e;">
+          <img src="assets/images/recharge-banner.png" alt="Recharge" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'">
+          <div style="position:absolute; inset:0; background:rgba(0,0,0,0.25);"></div>
+          <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:28px; font-weight:900; letter-spacing:2px; text-shadow:0 2px 10px rgba(0,0,0,0.3);">RECHARGE</div>
         </div>
-        <div class="px-4 -mt-6">
-          <p class="font-semibold text-sm mb-2">Select recharge amount</p>
-          <div class="grid grid-cols-4 gap-2 mb-4">
+        <div style="padding:0 16px; margin-top:-20px;">
+          <p style="font-weight:600; color:#343434; margin-bottom:8px;">Select recharge amount</p>
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:16px;">
             ${presetAmounts.map(a => `
-              <button class="amount-btn border-2 rounded-md py-2 text-sm font-semibold" style="border-color: ${amount === a ? 'var(--green)' : '#e5e5e5'}; background: ${amount === a ? 'var(--green)' : '#fff'}; color: ${amount === a ? '#fff' : '#343434'};">${a.toLocaleString()}</button>
+              <button class="amount-btn" data-amount="${a}" style="border:2px solid ${amount === a ? GOLD : '#e5e5e5'}; background:${amount === a ? GOLD : '#fff'}; color:${amount === a ? '#fff' : '#343434'}; border-radius:8px; padding:10px 0; font-weight:600; cursor:pointer; font-size:14px;">${a.toLocaleString()}</button>
             `).join('')}
           </div>
-          <div class="flex items-center border-2 rounded-md px-4 py-3 mb-4" style="border-color: var(--green);">
-            <span class="text-muted mr-2">RWF</span>
-            <input id="custom-amount" type="number" placeholder="Enter amount" class="flex-1 outline-none bg-transparent" value="${amount || ''}">
+          <div style="display:flex; align-items:center; border:2px solid ${GOLD}; border-radius:8px; padding:10px 16px; margin-bottom:16px;">
+            <span style="color:#6b6b6b; margin-right:8px;">RWF</span>
+            <input id="custom-amount" type="number" placeholder="Enter amount" style="flex:1; outline:none; border:none; background:transparent; font-size:16px; color:#343434;" value="${amount || ''}">
           </div>
-          <div class="card mb-4">
-            <p class="font-semibold text-sm">Recharge method</p>
-            <div class="flex items-center border-2 rounded-md px-4 py-3 mt-2" style="border-color: var(--green); background: #f3fdf6;">
-              <span class="w-7 h-7 rounded bg-green-500 flex items-center justify-center text-white text-xs mr-3">🏦</span>
-              <span class="flex-1 font-semibold">Deposit Bank</span>
-              <span class="text-green-500 text-lg">✓</span>
+          <div style="background:#fff; border-radius:12px; padding:16px; border:2px solid ${GOLD}; margin-bottom:16px;">
+            <p style="font-weight:600; color:#343434; margin-bottom:4px;">Recharge method</p>
+            <div style="display:flex; align-items:center; border:2px solid ${GOLD}; border-radius:8px; padding:12px 16px; background:#fffaf0;">
+              <span style="font-size:20px; margin-right:12px;">🏦</span>
+              <span style="flex:1; font-weight:600; color:#343434;">Deposit Bank</span>
+              <span style="color:${GOLD}; font-size:20px;">✓</span>
             </div>
           </div>
-          <button id="confirm-amount" class="btn" style="background: ${amount >= MIN ? 'var(--green)' : '#d9d9d9'};" ${amount < MIN ? 'disabled' : ''}>Confirm</button>
-          <button onclick="window.location.hash='records'" class="btn btn-secondary mt-2">View recharge history</button>
-          <ol class="text-xs text-muted mt-4 space-y-1">
-            <li>1. The minimum recharge amount is RWF6000.</li>
-            <li>2. Please use your latest account number for each recharge.</li>
-            <li>3. Carefully read the payment instructions.</li>
-            <li>4. If not credited, contact customer service.</li>
+          <button id="confirm-amount" style="width:100%; background:${amount >= MIN ? GOLD : '#d9d9d9'}; color:#fff; border:none; border-radius:30px; padding:14px; font-weight:700; font-size:16px; cursor:${amount >= MIN ? 'pointer' : 'default'}; margin-bottom:12px;" ${amount < MIN ? 'disabled' : ''}>Confirm</button>
+          <button onclick="window.location.hash='records'" style="width:100%; background:transparent; border:2px solid ${GOLD}; color:${GOLD_DARK}; border-radius:30px; padding:12px; font-weight:700; font-size:14px; cursor:pointer; margin-bottom:16px;">View recharge history</button>
+          <ol style="font-size:12px; color:#6b6b6b; line-height:1.6; padding-left:20px;">
+            <li>1. The minimum recharge amount is RWF6000. Recharges below this amount will not be credited to your account.</li>
+            <li>2. Please use your latest account number for each recharge to avoid using expired account information.</li>
+            <li>3. Please carefully read the payment gateway's instructions and strictly follow them.</li>
+            <li>4. If your recharge is not credited to your account immediately after the transfer, please upload your payment information on the recharge page or contact official customer service for assistance.</li>
           </ol>
         </div>
       `;
     } else if (step === 2) {
       html = `
-        <div class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center px-5">
-          <div class="bg-white rounded-xl p-6 w-full max-w-sm">
-            <button onclick="step=1; render()" class="absolute top-2 right-3 text-2xl text-gray-600">&times;</button>
-            <p class="text-center text-gold font-black text-sm tracking-widest">◎ AUTOPAY</p>
-            <p class="text-sm text-gray-600 mt-2">Payment Amount: <span class="font-bold text-gold">RWF ${amount}</span></p>
-            <p class="text-xs text-gray-500 mt-2">Please select a payment method</p>
-            <div class="flex gap-2 mt-1">
-              <button class="method-btn flex-1 border-2 rounded-md py-2 text-center" data-method="MTN" style="border-color: ${method === 'MTN' ? 'var(--gold)' : '#e0e0e0'}; background: ${method === 'MTN' ? '#fffaf0' : '#fff'};">
-                <span class="block text-xs font-black" style="color: ${method === 'MTN' ? 'var(--gold)' : '#343434'};">MTN</span>
-              </button>
-              <button class="method-btn flex-1 border-2 rounded-md py-2 text-center" data-method="Airtel" style="border-color: ${method === 'Airtel' ? 'var(--gold)' : '#e0e0e0'}; background: ${method === 'Airtel' ? '#fffaf0' : '#fff'};">
-                <span class="block text-xs font-black" style="color: ${method === 'Airtel' ? 'var(--gold)' : '#343434'};">AIRTEL</span>
-              </button>
+        <div style="position:fixed; inset:0; z-index:50; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; padding:0 20px;">
+          <div style="background:#fff; border-radius:20px; padding:24px; width:100%; max-width:400px; position:relative;">
+            <button onclick="step=1; render()" style="position:absolute; top:12px; right:16px; background:none; border:none; font-size:24px; color:#999; cursor:pointer;">&times;</button>
+            <p style="text-align:center; font-weight:900; color:${GOLD}; font-size:14px; letter-spacing:2px;">◎ STYLE HOUSE PAY</p>
+            <p style="font-size:14px; color:#343434; margin-top:8px;">Payment Amount: <span style="font-weight:bold; color:${GOLD};">RWF ${amount}</span></p>
+            <p style="font-size:12px; color:#6b6b6b; margin-top:12px;">Please select a payment method</p>
+            <div style="display:flex; gap:10px; margin-top:6px;">
+              <button class="method-btn" data-method="MTN" style="flex:1; border:2px solid ${method === 'MTN' ? GOLD : '#e0e0e0'}; background:${method === 'MTN' ? '#fffaf0' : '#fff'}; border-radius:8px; padding:12px; font-weight:600; color:#343434; cursor:pointer;">MTN</button>
+              <button class="method-btn" data-method="Airtel" style="flex:1; border:2px solid ${method === 'Airtel' ? GOLD : '#e0e0e0'}; background:${method === 'Airtel' ? '#fffaf0' : '#fff'}; border-radius:8px; padding:12px; font-weight:600; color:#343434; cursor:pointer;">AIRTEL</button>
             </div>
-            <div class="flex items-center border-2 rounded-md px-3 py-2 mt-3" style="border-color: #e0e0e0;">
-              <span class="text-gold text-sm mr-2">+250</span>
-              <input id="pay-account" type="text" placeholder="Please enter your payment account" class="flex-1 outline-none bg-transparent text-sm">
+            <div style="display:flex; align-items:center; border:2px solid #e0e0e0; border-radius:8px; padding:10px 14px; margin-top:12px;">
+              <span style="color:${GOLD}; font-weight:600; margin-right:8px;">+250</span>
+              <input id="pay-account" type="text" placeholder="Please enter your payment account" style="flex:1; outline:none; border:none; background:transparent; font-size:14px; color:#343434;">
             </div>
-            <p class="text-xs text-red-500 mt-1">⚠ Please fill in your payment account accurately.</p>
-            <button id="confirm-pay" class="btn btn-gold w-full mt-3">Confirm →</button>
+            <p style="font-size:11px; color:#dc2626; margin-top:6px;">⚠ Please fill in your payment account accurately, incorrect filling may result in the loss of the transferred funds.</p>
+            <button id="confirm-pay" style="width:100%; background:${GOLD}; color:#fff; border:none; border-radius:30px; padding:14px; font-weight:700; font-size:16px; cursor:pointer; margin-top:16px;">Confirm →</button>
           </div>
         </div>
       `;
@@ -90,54 +91,57 @@ export async function renderRecharge() {
       const bank = bankDetails[method];
       const ussd = `*182*1*1*${bank.number}*${amount}#`;
       html = `
-        <div class="fixed inset-0 z-50 bg-white overflow-y-auto">
-          <div class="bg-gray-800 text-white px-4 py-3 flex items-center justify-between">
-            <span class="text-gold font-black text-sm tracking-widest">◎ AUTOPAY</span>
-            <button onclick="window.location.hash='home'" class="text-white text-xl">&times;</button>
+        <div style="position:fixed; inset:0; z-index:50; background:#f5f5f5; overflow-y:auto;">
+          <div style="background:#2b2b2b; padding:16px; display:flex; justify-content:space-between; align-items:center;">
+            <span style="color:${GOLD}; font-weight:900; font-size:14px; letter-spacing:2px;">◎ STYLE HOUSE PAY</span>
+            <button onclick="window.location.hash='home'" style="background:none; border:none; color:#fff; font-size:20px; cursor:pointer;">&times;</button>
           </div>
-          <div class="p-4 space-y-4">
-            <div class="card">
-              <p class="text-muted text-sm">COPY &amp; PAY</p>
-              <p class="text-xs text-muted">Copy this <span class="font-bold text-red-500">${method}</span> account and make payment</p>
-              <div class="bg-gray-100 rounded-md p-3 mt-2">
-                <p class="text-muted text-xs">Total Amount:</p>
-                <p class="text-gold text-2xl font-bold">RWF ${amount}</p>
-                <div class="flex justify-between items-center mt-2">
+          <div style="padding:16px; max-width:400px; margin:0 auto;">
+            <div style="background:#fff; border-radius:16px; padding:16px; border:2px solid ${GOLD}; margin-bottom:16px;">
+              <p style="font-weight:600; color:#343434;">COPY &amp; PAY</p>
+              <p style="font-size:12px; color:#6b6b6b;">Copy this <span style="font-weight:bold; color:#dc2626;">${method}</span> account and make payment</p>
+              <div style="background:#f7f7f7; border-radius:8px; padding:12px; margin-top:8px;">
+                <p style="font-size:12px; color:#6b6b6b;">Total Amount:</p>
+                <p style="font-size:24px; font-weight:900; color:${GOLD};">RWF ${amount}</p>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
                   <div>
-                    <p class="text-muted text-xs">${method} Account:</p>
-                    <p class="text-gold text-xl font-bold">${bank.number}</p>
+                    <p style="font-size:12px; color:#6b6b6b;">${method} Account:</p>
+                    <p style="font-size:20px; font-weight:700; color:${GOLD};">${bank.number}</p>
                   </div>
-                  <button onclick="navigator.clipboard.writeText('${bank.number}'); toastSuccess('Copied!')" class="text-gray-400 text-lg">⧉</button>
+                  <button onclick="navigator.clipboard.writeText('${bank.number}'); window.toastSuccess('Copied!')" style="background:none; border:none; font-size:20px; color:#999; cursor:pointer;">⧉</button>
                 </div>
-                <div class="flex justify-between items-center mt-1">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
                   <div>
-                    <p class="text-muted text-xs">Account Name:</p>
-                    <p class="text-gold text-lg font-bold">${bank.name}</p>
+                    <p style="font-size:12px; color:#6b6b6b;">Account Name:</p>
+                    <p style="font-size:16px; font-weight:600; color:${GOLD};">${bank.name}</p>
                   </div>
-                  <button onclick="navigator.clipboard.writeText('${bank.name}'); toastSuccess('Copied!')" class="text-gray-400 text-lg">⧉</button>
+                  <button onclick="navigator.clipboard.writeText('${bank.name}'); window.toastSuccess('Copied!')" style="background:none; border:none; font-size:20px; color:#999; cursor:pointer;">⧉</button>
                 </div>
               </div>
-              <a href="tel:${ussd}" class="btn btn-gold w-full mt-3">Click to pay</a>
-              <p class="text-center text-gold text-sm mt-1">${ussd}</p>
+              <a href="tel:${ussd}" style="display:block; width:100%; background:${GOLD}; color:#fff; border:none; border-radius:30px; padding:14px; font-weight:700; text-align:center; text-decoration:none; margin-top:12px;">Click to pay</a>
+              <p style="text-align:center; color:${GOLD}; font-size:14px; margin-top:6px;">${ussd}</p>
             </div>
-            <div class="card">
-              <p class="text-muted text-sm">Payment completed?</p>
-              <div class="flex items-center justify-between mt-2">
+
+            <div style="background:#fff; border-radius:16px; padding:16px; border:2px solid ${GOLD}; margin-bottom:16px;">
+              <p style="font-weight:600; color:#343434;">Payment completed?</p>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
                 <div>
-                  <p class="text-muted text-xs">Amount paid:</p>
-                  <p class="text-2xl font-bold" style="color: ${orderId ? 'var(--gold)' : '#c7c7c7'};">RWF ${orderId ? amount : 0}</p>
+                  <p style="font-size:12px; color:#6b6b6b;">Amount paid:</p>
+                  <p style="font-size:20px; font-weight:900; color:${orderId ? GOLD : '#c7c7c7'};">RWF ${orderId ? amount : 0}</p>
                 </div>
-                <button id="refresh-pay" class="btn btn-gold px-6 py-2 text-sm">Refresh</button>
+                <button id="refresh-pay" style="background:${GOLD}; color:#fff; border:none; border-radius:30px; padding:8px 20px; font-weight:700; cursor:pointer;">Refresh</button>
               </div>
-              <p class="text-xs text-muted mt-1">Payment expected in 2-10 minutes.</p>
-              ${orderId ? `<p class="text-sm text-green-600 mt-1 font-semibold">Status: Processing · Order ${orderId}</p>` : ''}
+              <p style="font-size:11px; color:#6b6b6b; margin-top:4px;">The payment is expected to be successful in 2-10 minutes. Click to refresh the results.</p>
+              ${orderId ? `<p style="font-size:13px; color:#16a34a; font-weight:600; margin-top:6px;">Status: Processing · Order ${orderId}</p>` : ''}
             </div>
-            <div class="card">
-              <p class="text-muted text-sm">Your payment account:</p>
-              <p class="text-lg font-bold">${account}</p>
+
+            <div style="background:#fff; border-radius:16px; padding:16px; border:2px solid ${GOLD}; margin-bottom:16px;">
+              <p style="font-size:12px; color:#6b6b6b;">Your payment account:</p>
+              <p style="font-size:16px; font-weight:600; color:#343434;">${account}</p>
             </div>
-            <button onclick="window.location.hash='records'" class="btn btn-secondary">View recharge history</button>
-            <button onclick="window.location.hash='home'" class="btn">Back to home</button>
+
+            <button onclick="window.location.hash='records'" style="width:100%; background:transparent; border:2px solid ${GOLD}; color:${GOLD_DARK}; border-radius:30px; padding:12px; font-weight:700; cursor:pointer; margin-bottom:10px;">View recharge history</button>
+            <button onclick="window.location.hash='home'" style="width:100%; background:${GOLD}; color:#fff; border:none; border-radius:30px; padding:14px; font-weight:700; cursor:pointer;">Back to home</button>
           </div>
         </div>
       `;
@@ -150,7 +154,7 @@ export async function renderRecharge() {
     if (step === 1) {
       document.querySelectorAll('.amount-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          amount = parseInt(btn.textContent.replace(/,/g, ''));
+          amount = parseInt(btn.dataset.amount);
           document.getElementById('custom-amount').value = amount;
           render();
         });
@@ -185,7 +189,7 @@ export async function renderRecharge() {
       });
     } else if (step === 3) {
       document.getElementById('refresh-pay').addEventListener('click', () => {
-        // Simulate refresh – just go to records
+        // Simulate refresh – go to records
         window.location.hash = 'records';
       });
     }
