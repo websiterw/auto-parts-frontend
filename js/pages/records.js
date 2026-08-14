@@ -1,5 +1,5 @@
 import { getTransactions } from '../api.js';
-import { toastError, toastSuccess } from '../api.js';
+import { toastError } from '../api.js';
 
 export async function renderRecords() {
   const app = document.getElementById('app');
@@ -26,6 +26,7 @@ export async function renderRecords() {
         <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:26px; font-weight:900; letter-spacing:2px; text-shadow:0 2px 10px rgba(0,0,0,0.3);">RECORDS</div>
       </div>
       <div style="padding:0 16px; margin-top:-10px;">
+
         <!-- Tabs -->
         <div style="display:flex; background:#fff; border-radius:16px; border:2px solid ${GOLD}; overflow:hidden; margin-bottom:16px;">
           ${['recharge', 'withdrawal', 'income'].map(tab => `
@@ -47,7 +48,15 @@ export async function renderRecords() {
             <div style="background:#fff; border-radius:12px; padding:20px; border:2px solid ${GOLD}; text-align:center; color:#6b6b6b;">
               No ${currentTab} records.
             </div>
-          ` : filtered.map(t => `
+          ` : filtered.map(t => {
+            // Status badge color
+            let statusColor = '#16a34a';
+            let statusLabel = t.status || 'success';
+            if (statusLabel === 'pending') { statusColor = '#d99b1c'; }
+            else if (statusLabel === 'failed' || statusLabel === 'rejected') { statusColor = '#dc2626'; }
+            else { statusColor = '#16a34a'; }
+
+            return `
             <div style="background:#fff; border-radius:12px; padding:12px; border:2px solid ${GOLD};">
               <div style="display:flex; justify-content:space-between; align-items:center;">
                 <span style="font-weight:700; color:#343434;">${t.type.charAt(0).toUpperCase() + t.type.slice(1)}</span>
@@ -56,11 +65,13 @@ export async function renderRecords() {
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-top:6px; font-size:12px; color:#6b6b6b;">
                 <span>Order: ${t.reference || t._id}</span>
                 <span>Method: ${t.method || '-'}</span>
+                <span>Account: ${t.account || t.phone || '-'}</span>
+                <span>Holder: ${t.holderName || '-'}</span>
                 <span>Date: ${new Date(t.createdAt).toLocaleString()}</span>
-                <span style="font-weight:600; color:${t.status === 'success' ? '#16a34a' : '#dc2626'};">Status: ${t.status || 'success'}</span>
+                <span style="font-weight:600; color:${statusColor};">Status: ${statusLabel.toUpperCase()}</span>
               </div>
             </div>
-          `).join('')}
+          `}).join('')}
         </div>
 
         <button onclick="window.location.hash='home'" style="width:100%; background:${GOLD}; color:#fff; border:none; border-radius:30px; padding:14px; font-weight:700; font-size:16px; cursor:pointer; margin-bottom:20px;">Back to home</button>
