@@ -47,13 +47,13 @@ export function renderCustomerService() {
 
   // Telegram links – replace with your actual URLs
   document.getElementById('cs-telegram-service').addEventListener('click', () => {
-    window.open('https://t.me/Autopartsowner', '_blank');
+    window.open('@styllehouse_help', '_blank');
   });
   document.getElementById('cs-telegram-group').addEventListener('click', () => {
-    window.open('https://t.me/+A8If4xQRH7Y1YzBk', '_blank');
+    window.open('https://t.me/+jKhLQ3z8ZYM2OGVk', '_blank');
   });
   document.getElementById('cs-telegram-channel').addEventListener('click', () => {
-    window.open('https://t.me/+A8If4xQRH7Y1YzBk', '_blank');
+    window.open('https://t.me/+jKhLQ3z8ZYM2OGVk', '_blank');
   });
 
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
