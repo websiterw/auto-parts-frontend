@@ -5,9 +5,7 @@ export async function renderTeam() {
   const user = JSON.parse(localStorage.getItem('user')) || {};
   const data = await getTeamData().catch(() => ({ totalUsers: 0, totalRewards: 0, code: user.myReferralCode || '' }));
 
-  // Ensure we have a referral code
   const referralCode = data.code || user.myReferralCode || '';
-  // Build the invitation link
   const inviteLink = `${window.location.origin}/#register?code=${referralCode}`;
 
   app.innerHTML = `
