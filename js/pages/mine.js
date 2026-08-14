@@ -64,7 +64,7 @@ export async function renderMine() {
         <button class="btn" id="checkin-btn" style="background:#22c55e; color:#fff; border:none; border-radius:30px; padding:10px; font-weight:700; cursor:pointer;">Check in</button>
       </div>
 
-      <!-- Menu list with icons (left‑aligned) -->
+      <!-- Menu list with icons (left‑aligned) – NO "Join official group" -->
       <div style="background:#fff; border-radius:16px; border:2px solid #22c55e; overflow:hidden; margin-bottom:16px;">
         ${[
           { icon: 'fa-receipt', label: 'Recharge records', action: "window.location.hash='records'" },
@@ -74,7 +74,6 @@ export async function renderMine() {
           { icon: 'fa-users', label: 'My team', action: "window.location.hash='team'" },
           { icon: 'fa-link', label: 'Invitation link', action: `navigator.clipboard.writeText('${window.location.origin}/#register?code=${code}'); window.toastSuccess('Link copied!')` },
           { icon: 'fa-headset', label: 'Customer service', action: "window.location.hash='customerService'" },
-          { icon: 'fa-users', label: 'Join official group', action: "window.open('https://t.me/+A8If4xQRH7Y1YzBk', '_blank')" },
         ].map(item => `
           <div onclick="${item.action}" style="display:flex; align-items:center; gap:12px; padding:14px 16px; border-bottom:1px solid #f0f0f0; cursor:pointer; transition:background 0.1s;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='#fff'">
             <i class="fas ${item.icon}" style="color:#22c55e; width:20px; text-align:center;"></i>
