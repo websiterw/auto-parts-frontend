@@ -73,8 +73,8 @@ export async function renderMine() {
           { icon: 'fa-box', label: 'My products', action: "window.location.hash='myproduct'" },
           { icon: 'fa-users', label: 'My team', action: "window.location.hash='team'" },
           { icon: 'fa-link', label: 'Invitation link', action: `navigator.clipboard.writeText('${window.location.origin}/#register?code=${code}'); window.toastSuccess('Link copied!')` },
-          { icon: 'fa-headset', label: 'Customer service', action: "window.open('https://t.me/your_group', '_blank')" },
-          { icon: 'fa-users', label: 'Join official group', action: "window.open('https://t.me/your_group', '_blank')" },
+          { icon: 'fa-headset', label: 'Customer service', action: "window.location.hash='customerService'" },
+          { icon: 'fa-users', label: 'Join official group', action: "window.open('https://t.me/+A8If4xQRH7Y1YzBk', '_blank')" },
         ].map(item => `
           <div onclick="${item.action}" style="display:flex; align-items:center; gap:12px; padding:14px 16px; border-bottom:1px solid #f0f0f0; cursor:pointer; transition:background 0.1s;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='#fff'">
             <i class="fas ${item.icon}" style="color:#22c55e; width:20px; text-align:center;"></i>
