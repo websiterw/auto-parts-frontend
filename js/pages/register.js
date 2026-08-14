@@ -4,21 +4,15 @@ import { toastError, toastSuccess } from '../api.js';
 export function renderRegister() {
   const app = document.getElementById('app');
 
-  // ===== METHOD 1: Read from global variable set by app.js =====
-  let referralCode = window._referralCode || '';
+  // ===== READ CODE FROM GLOBAL VARIABLE (set by app.js) =====
+  const referralCode = window._referralCode || '';
 
-  // ===== METHOD 2: Fallback – read from the full URL =====
-  if (!referralCode) {
+  // Also try to read from the full URL as a fallback
+  let finalCode = referralCode;
+  if (!finalCode) {
     const fullUrl = window.location.href;
     const match = fullUrl.match(/[?&]code=([^&]+)/);
-    if (match) referralCode = match[1];
-  }
-
-  // ===== METHOD 3: Fallback – read from the hash =====
-  if (!referralCode) {
-    const hash = window.location.hash;
-    const match = hash.match(/[?&]code=([^&]+)/);
-    if (match) referralCode = match[1];
+    if (match) finalCode = match[1];
   }
 
   app.innerHTML = `
@@ -41,7 +35,7 @@ export function renderRegister() {
             <input id="reg-password2" type="password" placeholder="Re-enter password" style="flex:1; outline:none; border:none; background:transparent; color:#16a34a; font-size:16px;">
           </div>
           <div style="display:flex; align-items:center; border:2px solid #22c55e; border-radius:12px; padding:12px 16px;">
-            <input id="reg-invite" type="text" placeholder="Invitation code (optional)" value="${referralCode}" style="flex:1; outline:none; border:none; background:transparent; color:#16a34a; font-size:16px;">
+            <input id="reg-invite" type="text" placeholder="Invitation code (optional)" value="${finalCode}" style="flex:1; outline:none; border:none; background:transparent; color:#16a34a; font-size:16px;">
           </div>
         </div>
         <div style="text-align:right; margin-top:16px;">
