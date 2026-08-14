@@ -1,5 +1,16 @@
-import { getProducts, purchaseProduct } from '../api.js';
+import { getProducts, purchaseProduct, apiCall } from '../api.js';
 import { toastError, toastSuccess } from '../api.js';
+
+// Map product level to Lovable names
+const productNameMap = {
+  1: 'Product 1 · T-shirts',
+  2: 'Product 2 · Sneakers',
+  3: 'Product 3 · Jeans',
+  4: 'Product 4 · Dresses',
+  5: 'Product 5 · Leather shoes',
+  6: 'Product 6 · Jackets',
+  7: 'Product 7 · Bags & accessories',
+};
 
 export async function renderProduct() {
   const app = document.getElementById('app');
@@ -17,16 +28,20 @@ export async function renderProduct() {
     </div>
     <div style="padding:0 16px; margin-top:-20px;">
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-        ${products.map(p => `
-          <div style="background:#fff; border-radius:12px; padding:12px; border:2px solid #22c55e;">
-            <img src="assets/images/product-vip${p.level || 1}.png" alt="${p.name}" style="width:100%; height:100px; object-fit:contain; border-radius:8px; background:#f0fdf4;" onerror="this.style.display='none'">
-            <p style="font-weight:900; color:#16a34a; font-size:13px; margin-top:6px;">${p.name}</p>
-            <p style="font-weight:900; color:#dc2626; font-size:14px;">RWF ${p.price}</p>
-            <p style="font-size:12px; color:#16a34a;">Daily: RWF ${p.dailyIncome}</p>
-            <p style="font-size:11px; color:#dc2626;">${p.termDays} days total: RWF ${p.totalIncome}</p>
-            <button class="product-buy" data-id="${p._id}" data-price="${p.price}" style="width:100%; background:#22c55e; color:#fff; border:none; border-radius:30px; padding:8px; font-weight:700; cursor:pointer; margin-top:8px;">Buy</button>
-          </div>
-        `).join('')}
+        ${products.map(p => {
+          const level = p.level || 1;
+          const displayName = productNameMap[level] || p.name;
+          return `
+            <div style="background:#fff; border-radius:12px; padding:12px; border:2px solid #22c55e;">
+              <img src="assets/images/product-vip${level}.png" alt="${displayName}" style="width:100%; height:100px; object-fit:contain; border-radius:8px; background:#f0fdf4;" onerror="this.style.display='none'">
+              <p style="font-weight:900; color:#16a34a; font-size:13px; margin-top:6px;">${displayName}</p>
+              <p style="font-weight:900; color:#dc2626; font-size:14px;">RWF ${p.price}</p>
+              <p style="font-size:12px; color:#16a34a;">Daily: RWF ${p.dailyIncome}</p>
+              <p style="font-size:11px; color:#dc2626;">${p.termDays} days total: RWF ${p.totalIncome}</p>
+              <button class="product-buy" data-id="${p._id}" data-price="${p.price}" style="width:100%; background:#22c55e; color:#fff; border:none; border-radius:30px; padding:8px; font-weight:700; cursor:pointer; margin-top:8px;">Buy</button>
+            </div>
+          `;
+        }).join('')}
       </div>
     </div>
   `;
