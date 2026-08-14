@@ -3,9 +3,13 @@ import { toastError, toastSuccess } from '../api.js';
 
 export function renderRegister() {
   const app = document.getElementById('app');
-  // Read code from URL query string (e.g., ?code=ABC12)
-  const urlParams = new URLSearchParams(window.location.search);
-  const code = urlParams.get('code') || '';
+  // Read code from the hash (e.g., #register?code=ABC12)
+  let code = '';
+  const hash = window.location.hash;
+  if (hash.includes('?code=')) {
+    const match = hash.match(/[?&]code=([^&]+)/);
+    if (match) code = match[1];
+  }
 
   app.innerHTML = `
     <div style="position:relative; width:100%; height:280px; background: #22c55e;">
