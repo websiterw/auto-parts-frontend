@@ -56,6 +56,5 @@ export function renderCustomerService() {
     window.open('https://t.me/+A8If4xQRH7Y1YzBk', '_blank');
   });
 
-  // Bottom nav highlight (deselect all)
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
 }
