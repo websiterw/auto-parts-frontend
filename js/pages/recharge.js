@@ -7,6 +7,7 @@ export async function renderRecharge() {
   let amount = 0;
   let method = 'MTN';
   let account = '';
+  let holderName = '';
   let orderId = '';
   let timerInterval = null;
   let timeLeft = 180; // 3 minutes
@@ -82,6 +83,10 @@ export async function renderRecharge() {
               <span style="color:${GOLD}; font-weight:600; margin-right:8px;">+250</span>
               <input id="pay-account" type="text" placeholder="Please enter your payment account" style="flex:1; outline:none; border:none; background:transparent; font-size:14px; color:#343434;">
             </div>
+            <div style="display:flex; align-items:center; border:2px solid #e0e0e0; border-radius:8px; padding:10px 14px; margin-top:8px;">
+              <span style="color:${GOLD}; font-weight:600; margin-right:8px;">👤</span>
+              <input id="pay-holder" type="text" placeholder="Account holder name" style="flex:1; outline:none; border:none; background:transparent; font-size:14px; color:#343434;">
+            </div>
             <p style="font-size:11px; color:#dc2626; margin-top:6px;">⚠ Please fill in your payment account accurately, incorrect filling may result in the loss of the transferred funds.</p>
             <button id="confirm-pay" style="width:100%; background:${GOLD}; color:#fff; border:none; border-radius:30px; padding:14px; font-weight:700; font-size:16px; cursor:pointer; margin-top:16px;">Confirm →</button>
           </div>
@@ -138,6 +143,7 @@ export async function renderRecharge() {
             <div style="background:#fff; border-radius:16px; padding:16px; border:2px solid ${GOLD}; margin-bottom:16px;">
               <p style="font-size:12px; color:#6b6b6b;">Your payment account:</p>
               <p style="font-size:16px; font-weight:600; color:#343434;">${account}</p>
+              <p style="font-size:14px; font-weight:600; color:#343434;">${holderName}</p>
             </div>
 
             <button onclick="window.location.hash='records'" style="width:100%; background:transparent; border:2px solid ${GOLD}; color:${GOLD_DARK}; border-radius:30px; padding:12px; font-weight:700; cursor:pointer; margin-bottom:10px;">View recharge history</button>
@@ -177,9 +183,11 @@ export async function renderRecharge() {
       });
       document.getElementById('confirm-pay').addEventListener('click', async () => {
         account = document.getElementById('pay-account').value.trim();
-        if (!account) { toastError('Please enter your payment account'); return; }
+        holderName = document.getElementById('pay-holder').value.trim();
+        if (!account) { toastError('Please enter your payment account number'); return; }
+        if (!holderName) { toastError('Please enter the account holder name'); return; }
         try {
-          const res = await requestRecharge({ amount, method, account });
+          const res = await requestRecharge({ amount, method, account, holderName });
           orderId = res.pendingId || 'AP' + Date.now().toString().slice(-8);
           step = 3;
           render();
@@ -189,7 +197,7 @@ export async function renderRecharge() {
       });
     } else if (step === 3) {
       document.getElementById('refresh-pay').addEventListener('click', () => {
-        // Simulate refresh – go to records
+        // Redirect to records page to show pending status
         window.location.hash = 'records';
       });
     }
