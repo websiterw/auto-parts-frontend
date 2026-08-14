@@ -15,6 +15,7 @@ import { renderMine } from './pages/mine.js';
 import { renderRecharge } from './pages/recharge.js';
 import { renderWithdraw } from './pages/withdraw.js';
 import { renderRecords } from './pages/records.js';
+import { renderCustomerService } from './pages/customerService.js'; // NEW
 
 window.api = api;
 window.toastError = toastError;
@@ -33,16 +34,15 @@ const routes = {
   recharge: renderRecharge,
   withdraw: renderWithdraw,
   records: renderRecords,
+  customerService: renderCustomerService, // NEW
 };
 
 // ============================================================
 // MAIN ROUTER – PRESERVES QUERY STRING FOR REFERRAL CODE
 // ============================================================
 function loadPage() {
-  // 1. Get the full hash (including query string)
   const fullHash = window.location.hash; // e.g., "#register?code=HVOMU"
 
-  // 2. Extract page name and query string
   let page = 'register';
   let query = '';
   if (fullHash) {
@@ -51,7 +51,7 @@ function loadPage() {
     query = parts[1] || '';
   }
 
-  // 3. If there's a query string with a code, store it globally
+  // Store referral code globally
   if (query.includes('code=')) {
     const match = query.match(/code=([^&]+)/);
     if (match) window._referralCode = match[1];
@@ -61,17 +61,15 @@ function loadPage() {
 
   const token = localStorage.getItem('token');
 
-  // 4. If not logged in and not on register/login, go to register (but keep the query!)
+  // If not logged in and not on register/login, go to register (keep query)
   if (!token && page !== 'register' && page !== 'login') {
     page = 'register';
-    // Preserve the query string if it exists
     const newHash = query ? `#register?${query}` : '#register';
     if (window.location.hash !== newHash) {
       history.replaceState(null, '', newHash);
     }
   }
 
-  // 5. Render the page
   const render = routes[page];
   if (render) {
     render();
@@ -105,5 +103,4 @@ document.addEventListener('DOMContentLoaded', () => {
   loadPage();
 });
 
-// Expose reload function for manual refresh (e.g., after login)
 window.reloadPage = loadPage;
