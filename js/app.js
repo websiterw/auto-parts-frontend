@@ -15,7 +15,7 @@ import { renderMine } from './pages/mine.js';
 import { renderRecharge } from './pages/recharge.js';
 import { renderWithdraw } from './pages/withdraw.js';
 import { renderRecords } from './pages/records.js';
-import { renderCustomerService } from './pages/customerService.js'; // NEW
+import { renderCustomerService } from './pages/customerService.js';
 
 window.api = api;
 window.toastError = toastError;
@@ -34,15 +34,14 @@ const routes = {
   recharge: renderRecharge,
   withdraw: renderWithdraw,
   records: renderRecords,
-  customerService: renderCustomerService, // NEW
+  customerService: renderCustomerService,
 };
 
 // ============================================================
 // MAIN ROUTER – PRESERVES QUERY STRING FOR REFERRAL CODE
 // ============================================================
 function loadPage() {
-  const fullHash = window.location.hash; // e.g., "#register?code=HVOMU"
-
+  const fullHash = window.location.hash;
   let page = 'register';
   let query = '';
   if (fullHash) {
@@ -51,7 +50,6 @@ function loadPage() {
     query = parts[1] || '';
   }
 
-  // Store referral code globally
   if (query.includes('code=')) {
     const match = query.match(/code=([^&]+)/);
     if (match) window._referralCode = match[1];
@@ -61,7 +59,6 @@ function loadPage() {
 
   const token = localStorage.getItem('token');
 
-  // If not logged in and not on register/login, go to register (keep query)
   if (!token && page !== 'register' && page !== 'login') {
     page = 'register';
     const newHash = query ? `#register?${query}` : '#register';
@@ -90,7 +87,6 @@ function loadPage() {
   }
 }
 
-// Navigation clicks
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', () => {
