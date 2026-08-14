@@ -3,13 +3,12 @@ import { toastError, toastSuccess } from '../api.js';
 
 export function renderRegister() {
   const app = document.getElementById('app');
-  // Read code from the hash (e.g., #register?code=ABC12)
-  let code = '';
-  const hash = window.location.hash;
-  if (hash.includes('?code=')) {
-    const match = hash.match(/[?&]code=([^&]+)/);
-    if (match) code = match[1];
-  }
+
+  // ===== Read code from the FULL URL (including hash) =====
+  let referralCode = '';
+  const fullUrl = window.location.href;
+  const match = fullUrl.match(/[?&]code=([^&]+)/);
+  if (match) referralCode = match[1];
 
   app.innerHTML = `
     <div style="position:relative; width:100%; height:280px; background: #22c55e;">
@@ -31,7 +30,7 @@ export function renderRegister() {
             <input id="reg-password2" type="password" placeholder="Re-enter password" style="flex:1; outline:none; border:none; background:transparent; color:#16a34a; font-size:16px;">
           </div>
           <div style="display:flex; align-items:center; border:2px solid #22c55e; border-radius:12px; padding:12px 16px;">
-            <input id="reg-invite" type="text" placeholder="Invitation code (optional)" value="${code}" style="flex:1; outline:none; border:none; background:transparent; color:#16a34a; font-size:16px;">
+            <input id="reg-invite" type="text" placeholder="Invitation code (optional)" value="${referralCode}" style="flex:1; outline:none; border:none; background:transparent; color:#16a34a; font-size:16px;">
           </div>
         </div>
         <div style="text-align:right; margin-top:16px;">
