@@ -4,27 +4,8 @@ import { toastError, toastSuccess } from '../api.js';
 export function renderRegister() {
   const app = document.getElementById('app');
 
-  // ✅ Read code from the FULL URL (including hash)
-  const fullUrl = window.location.href; // e.g., "https://.../#register?code=HVOMU"
-  let referralCode = '';
-
-  // Try to extract code from the hash part first
-  const hashIndex = fullUrl.indexOf('#');
-  if (hashIndex !== -1) {
-    const hashPart = fullUrl.substring(hashIndex); // "#register?code=HVOMU"
-    const queryIndex = hashPart.indexOf('?');
-    if (queryIndex !== -1) {
-      const queryString = hashPart.substring(queryIndex + 1); // "code=HVOMU"
-      const params = new URLSearchParams(queryString);
-      referralCode = params.get('code') || '';
-    }
-  }
-
-  // Fallback: if not found in hash, try window.location.search
-  if (!referralCode) {
-    const params = new URLSearchParams(window.location.search);
-    referralCode = params.get('code') || '';
-  }
+  // Read from the global variable set by app.js
+  const referralCode = window._referralCode || '';
 
   app.innerHTML = `
     <div style="position:relative; width:100%; height:280px; background: #22c55e;">
@@ -58,7 +39,6 @@ export function renderRegister() {
     </div>
   `;
 
-  // --- Event listeners (unchanged) ---
   document.getElementById('register-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const account = document.getElementById('reg-account').value.trim();
@@ -66,7 +46,7 @@ export function renderRegister() {
     const pass2 = document.getElementById('reg-password2').value;
     const invite = document.getElementById('reg-invite').value.trim();
     if (!account || !pass || !pass2) {
-      toastError('Please fill all fields');
+      toastError('Please fill all required fields');
       return;
     }
     if (pass !== pass2) {
