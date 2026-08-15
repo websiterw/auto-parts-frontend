@@ -1,53 +1,41 @@
-import { getRecharges, getTransactions } from '../api.js';
-import { toastError } from '../api.js';
+import { getTransactions, getRecharges, getWithdrawals } from '../api.js';
+import { toastError, toastSuccess } from '../api.js';
 
 export async function renderRecords() {
   const app = document.getElementById('app');
   let txs = [];
+  let recharges = [];
+  let withdrawals = [];
   let currentTab = 'recharge';
   const GOLD = '#d99b1c';
   const GOLD_DARK = '#b8860b';
 
   try {
-    // For recharge records, we use the dedicated recharge endpoint which includes pending status
-    const recharges = await getRecharges();
-    // For withdrawal and income, we use transactions
-    const transactions = await getTransactions();
-    // Combine: we'll show recharge records from the recharge endpoint
-    // For withdrawal and income, we'll use transactions
-    // We'll create a unified list based on tab
-    txs = transactions;
+    [txs, recharges, withdrawals] = await Promise.all([
+      getTransactions().catch(() => []),
+      getRecharges().catch(() => []),
+      getWithdrawals().catch(() => [])
+    ]);
   } catch (err) {
     toastError('Failed to load records');
   }
 
   function render() {
-    let filtered = [];
-    let total = 0;
     let records = [];
-
+    let title = '';
     if (currentTab === 'recharge') {
-      // Use recharge endpoint data (which includes pending)
-      // We'll fetch fresh on each render
-      getRecharges().then(data => {
-        records = data;
-        renderRecordsList(records);
-      }).catch(() => {
-        records = [];
-        renderRecordsList(records);
-      });
+      records = recharges;
+      title = 'Recharge';
+    } else if (currentTab === 'withdrawal') {
+      records = withdrawals;
+      title = 'Withdrawal';
     } else {
-      // For withdrawal and income, use transactions
-      const type = currentTab === 'withdrawal' ? 'withdrawal' : 'product_income';
-      filtered = txs.filter(t => t.type === type);
-      total = filtered.reduce((sum, t) => sum + t.amount, 0);
-      records = filtered;
-      renderRecordsList(records);
+      records = txs.filter(t => t.type === 'product_income');
+      title = 'Income';
     }
-  }
 
-  function renderRecordsList(records) {
-    const totalAmount = records.reduce((sum, r) => sum + (r.amount || 0), 0);
+    const total = records.reduce((sum, r) => sum + (r.amount || 0), 0);
+
     app.innerHTML = `
       <div style="position:relative; width:100%; height:160px; background: #22c55e; overflow:hidden;">
         <img src="assets/images/records-banner.png" alt="Records" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'">
@@ -66,42 +54,32 @@ export async function renderRecords() {
 
         <!-- Stats -->
         <div style="background:#fff; border-radius:12px; padding:12px; border:2px solid ${GOLD}; text-align:center; margin-bottom:16px;">
-          <p style="color:#6b6b6b; font-size:12px;">Total ${currentTab}</p>
-          <p style="font-size:22px; font-weight:900; color:${GOLD_DARK};">RWF ${totalAmount.toFixed(2)}</p>
+          <p style="color:#6b6b6b; font-size:12px;">Total ${title}</p>
+          <p style="font-size:22px; font-weight:900; color:${GOLD_DARK};">RWF ${total.toFixed(2)}</p>
         </div>
 
         <!-- Records list -->
         <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
           ${records.length === 0 ? `
             <div style="background:#fff; border-radius:12px; padding:20px; border:2px solid ${GOLD}; text-align:center; color:#6b6b6b;">
-              No ${currentTab} records.
+              No ${title} records.
             </div>
           ` : records.map(r => {
-            const status = r.status || 'success';
+            const status = r.status || 'pending';
             const isPending = status === 'pending';
-            const isSuccess = status === 'approved' || status === 'success';
-            const statusColor = isPending ? '#d99b1c' : isSuccess ? '#16a34a' : '#dc2626';
-            const statusLabel = isPending ? 'Pending' : isSuccess ? 'Success' : 'Rejected';
-            const amount = r.amount || 0;
-            const method = r.method || r.paymentMethod || '-';
-            const account = r.account || r.phone || '-';
-            const holder = r.holderName || '-';
-            const createdAt = r.createdAt || new Date();
             return `
-              <div style="background:#fff; border-radius:12px; padding:12px; border:2px solid ${GOLD};">
+              <div style="background:#fff; border-radius:12px; padding:12px; border:2px solid ${isPending ? '#ff9800' : GOLD};">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                  <span style="font-weight:700; color:#343434;">${currentTab.charAt(0).toUpperCase() + currentTab.slice(1)}</span>
-                  <span style="font-weight:900; color:${statusColor};">${statusLabel}</span>
+                  <span style="font-weight:700; color:#343434;">${title}</span>
+                  <span style="font-weight:900; color:${r.amount >= 0 ? '#16a34a' : '#dc2626'};">${r.amount >= 0 ? '+' : ''}RWF ${(r.amount || 0).toFixed(2)}</span>
                 </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
-                  <span style="font-weight:900; color:${amount >= 0 ? '#16a34a' : '#dc2626'};">${amount >= 0 ? '+' : ''}RWF ${amount.toFixed(2)}</span>
-                  <span style="font-size:12px; color:#6b6b6b;">${method}</span>
-                </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-top:4px; font-size:12px; color:#6b6b6b;">
-                  <span>Account: ${account}</span>
-                  <span>Holder: ${holder}</span>
-                  <span>Date: ${new Date(createdAt).toLocaleString()}</span>
-                  <span style="font-weight:600; color:${statusColor};">Status: ${statusLabel}</span>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-top:6px; font-size:12px; color:#6b6b6b;">
+                  <span>Order: ${r.reference || r._id || r.order_no || ''}</span>
+                  <span>Method: ${r.method || '-'}</span>
+                  ${r.depositBank ? `<span>Deposit Bank: ${r.depositBank}</span>` : ''}
+                  ${r.holderName ? `<span>Holder: ${r.holderName}</span>` : ''}
+                  <span>Date: ${new Date(r.createdAt || r.purchased_at || Date.now()).toLocaleString()}</span>
+                  <span style="font-weight:600; color:${isPending ? '#ff9800' : status === 'approved' ? '#16a34a' : '#dc2626'};">Status: ${status}</span>
                 </div>
               </div>
             `;
