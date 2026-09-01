@@ -3,13 +3,13 @@ import { toastError, toastSuccess } from '../api.js';
 
 // Map product level to Lovable names
 const productNameMap = {
-  1: 'Product 1 · T-shirts',
-  2: 'Product 2 · Sneakers',
-  3: 'Product 3 · Jeans',
-  4: 'Product 4 · Dresses',
-  5: 'Product 5 · Leather shoes',
-  6: 'Product 6 · Jackets',
-  7: 'Product 7 · Bags & accessories',
+  1: 'Product 1',
+  2: 'Product 2',
+  3: 'Product 3',
+  4: 'Product 4',
+  5: 'Product 5',
+  6: 'Product 6',
+  7: 'Product 7',
 };
 
 export async function renderProduct() {
