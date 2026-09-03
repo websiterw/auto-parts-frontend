@@ -9,7 +9,7 @@ export async function renderTeam() {
   const inviteLink = `${window.location.origin}/#register?code=${referralCode}`;
 
   app.innerHTML = `
-    <div style="position:relative; width:100%; height:180px; background: #22c55e;">
+    <div style="position:relative; width:100%; height:100px; background: #22c55e;">
       <img src="assets/images/team-banner.png" alt="Team" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'">
       <div style="position:absolute; inset:0; background:rgba(0,0,0,0.25);"></div>
       <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:28px; font-weight:900; letter-spacing:2px; text-shadow:0 2px 10px rgba(0,0,0,0.3);">Team</div>
