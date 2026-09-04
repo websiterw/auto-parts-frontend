@@ -1,118 +1,165 @@
-import { getMe } from '../api.js';
-
-let refreshInterval = null;
+import { getMe, getTeamData, getInvestments, checkin, apiCall } from '../api.js';
+import { toastError, toastSuccess } from '../api.js';
 
 export async function renderHome() {
   const app = document.getElementById('app');
-  const user = JSON.parse(localStorage.getItem('user')) || { balance: 0, cumulativeIncome: 0 };
-  app.className = 'dark-page';
 
-  // Function to fetch fresh user data and update the UI
-  async function refreshBalance() {
+  // ✅ Always fetch fresh user data FIRST
+  let user = JSON.parse(localStorage.getItem('user')) || { balance: 0, cumulativeIncome: 0 };
+  try {
+    const fresh = await getMe();
+    user = fresh;
+    localStorage.setItem('user', JSON.stringify(user));
+  } catch (e) {
+    // fallback to cached user
+  }
+
+  let team = { totalUsers: 0, totalRewards: 0 };
+  let investments = [];
+  let products = [];
+
+  try {
+    const [teamData, inv, prod] = await Promise.all([
+      getTeamData().catch(() => ({ totalUsers: 0, totalRewards: 0 })),
+      getInvestments().catch(() => []),
+      apiCall('/products').catch(() => [])
+    ]);
+    team = teamData || team;
+    investments = inv || [];
+    products = prod || [];
+  } catch (e) {
+    console.error('Home load error:', e);
+  }
+
+  const totalDaily = investments.reduce((sum, inv) => sum + (inv.dailyIncome || 0), 0);
+
+  app.innerHTML = `
+    <div style="min-height:100vh; background:#f5f5f5; padding-bottom:80px;">
+
+      <!-- HERO BANNER -->
+      <div style="position:relative; width:100%; height:200px; background: #22c55e; overflow:hidden;">
+        <img src="assets/images/home-banner.png" alt="Style House" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'">
+        <div style="position:absolute; inset:0; background:rgba(0,0,0,0.25);"></div>
+        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:32px; font-weight:900; letter-spacing:2px; text-shadow:0 2px 10px rgba(0,0,0,0.3);">GreenBasket</div>
+      </div>
+
+      <!-- QUICK ACTIONS -->
+      <div style="background:#fff; border-radius:16px; border:2px solid #22c55e; margin:-16px 16px 12px; padding:12px 8px; display:grid; grid-template-columns:repeat(5,1fr); gap:4px; box-shadow:0 4px 12px rgba(0,0,0,0.05);">
+        <button onclick="window.location.hash='recharge'" style="display:flex; flex-direction:column; align-items:center; gap:4px; background:none; border:none; cursor:pointer; padding:4px;">
+          <span style="width:40px; height:40px; border-radius:50%; background:#22c55e; display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px;"><i class="fas fa-wallet"></i></span>
+          <span style="font-size:10px; font-weight:700; color:#16a34a;">Recharge</span>
+        </button>
+        <button onclick="window.location.hash='withdraw'" style="display:flex; flex-direction:column; align-items:center; gap:4px; background:none; border:none; cursor:pointer; padding:4px;">
+          <span style="width:40px; height:40px; border-radius:50%; background:#22c55e; display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px;"><i class="fas fa-arrow-up"></i></span>
+          <span style="font-size:10px; font-weight:700; color:#16a34a;">Withdraw</span>
+        </button>
+        <button onclick="window.location.hash='team'" style="display:flex; flex-direction:column; align-items:center; gap:4px; background:none; border:none; cursor:pointer; padding:4px;">
+          <span style="width:40px; height:40px; border-radius:50%; background:#22c55e; display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px;"><i class="fas fa-users"></i></span>
+          <span style="font-size:10px; font-weight:700; color:#16a34a;">Team</span>
+        </button>
+        <button id="home-checkin-btn" style="display:flex; flex-direction:column; align-items:center; gap:4px; background:none; border:none; cursor:pointer; padding:4px;">
+          <span style="width:40px; height:40px; border-radius:50%; background:#22c55e; display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px;"><i class="fas fa-check"></i></span>
+          <span style="font-size:10px; font-weight:700; color:#16a34a;">Check in</span>
+        </button>
+        <button onclick="window.location.hash='customerService'" style="display:flex; flex-direction:column; align-items:center; gap:4px; background:none; border:none; cursor:pointer; padding:4px;">
+          <span style="width:40px; height:40px; border-radius:50%; background:#22c55e; display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px;"><i class="fas fa-headset"></i></span>
+          <span style="font-size:10px; font-weight:700; color:#16a34a;">Help</span>
+        </button>
+      </div>
+
+      <!-- SCROLLING TICKER -->
+      <div style="margin:0 16px 12px; background:#fff; border-radius:12px; border:2px solid #dc2626; padding:8px 12px; overflow:hidden;">
+        <div style="display:flex; gap:12px; align-items:center;">
+          <span style="color:#dc2626; font-size:18px;">🔔</span>
+          <div style="flex:1; overflow:hidden;">
+            <p style="white-space:nowrap; animation: ticker 18s linear infinite; color:#16a34a; font-size:13px; font-weight:600;">
+              🛒 ****${(user.accountNumber || '').slice(-4) || '0000'} bought sneakers RWF 25,000 · ****3326 bought a dress RWF 40,000 · ****5557 recharged RWF 10,000
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- BALANCE CARDS -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:0 16px 12px;">
+        <div style="background:#fff; border-radius:16px; padding:12px; border:2px solid #22c55e; text-align:center;">
+          <p style="color:#6b6b6b; font-size:11px;">Account balance</p>
+          <p style="font-size:22px; font-weight:900; color:#dc2626;">RWF ${(user.balance || 0).toFixed(2)}</p>
+        </div>
+        <div style="background:#fff; border-radius:16px; padding:12px; border:2px solid #22c55e; text-align:center;">
+          <p style="color:#6b6b6b; font-size:11px;">Cumulative income</p>
+          <p style="font-size:22px; font-weight:900; color:#dc2626;">RWF ${(user.cumulativeIncome || 0).toFixed(2)}</p>
+        </div>
+      </div>
+
+      <!-- DAILY CHECK-IN -->
+      <div style="margin:0 16px 12px; background:#fff; border-radius:16px; padding:16px; border:2px solid #22c55e;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <p style="font-weight:900; color:#16a34a; font-size:15px;">Daily check-in</p>
+            <p style="font-size:12px; color:#6b6b6b;">Claim 1% of your balance (min RWF 100) — once every 24 hours</p>
+          </div>
+          <button id="checkin-btn" style="background:#22c55e; color:#fff; border:none; border-radius:30px; padding:8px 20px; font-weight:700; cursor:pointer;">Claim</button>
+        </div>
+      </div>
+
+      <!-- PRODUCTS SECTION -->
+      <h2 style="text-align:center; font-size:20px; font-weight:900; color:#16a34a; margin:16px 0 8px;">Products</h2>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:0 16px 12px;" id="product-grid">
+        ${products.slice(0, 4).map(p => `
+          <div style="background:#fff; border-radius:12px; padding:12px; border:2px solid #22c55e;">
+            <img src="assets/images/product-vip${p.level || 1}.png" alt="${p.name}" style="width:100%; height:90px; object-fit:contain; border-radius:8px; background:#f0fdf4;" onerror="this.style.display='none'">
+            <p style="font-weight:900; color:#16a34a; font-size:12px; margin-top:4px;">${p.name}</p>
+            <p style="font-weight:900; color:#dc2626; font-size:14px;">RWF ${p.price}</p>
+            <p style="font-size:11px; color:#16a34a;">Daily: RWF ${p.dailyIncome}</p>
+            <p style="font-size:10px; color:#6b6b6b;">${p.termDays} days total: RWF ${p.totalIncome}</p>
+            <button class="product-buy" data-id="${p._id}" data-price="${p.price}" style="width:100%; background:#22c55e; color:#fff; border:none; border-radius:30px; padding:6px; font-size:12px; font-weight:700; cursor:pointer; margin-top:6px;">Buy</button>
+          </div>
+        `).join('')}
+      </div>
+      <button onclick="window.location.hash='product'" style="display:block; margin:0 16px 16px; width:calc(100% - 32px); background:transparent; border:2px solid #22c55e; border-radius:30px; padding:10px; font-weight:700; color:#16a34a; cursor:pointer;">See all products</button>
+
+      <style>
+        @keyframes ticker {
+          from { transform: translateX(100%); }
+          to { transform: translateX(-100%); }
+        }
+      </style>
+    </div>
+  `;
+
+  // Check-in
+  document.getElementById('checkin-btn').addEventListener('click', async () => {
     try {
+      const data = await checkin();
+      toastSuccess(`Check-in successful! +RWF ${data.amount || 100}`);
       const fresh = await getMe();
       user.balance = fresh.balance;
       user.cumulativeIncome = fresh.cumulativeIncome;
       localStorage.setItem('user', JSON.stringify(user));
-      updateBalanceDisplay();
-    } catch (e) {
-      // silent fail – user will still see cached balance
+      renderHome();
+    } catch (err) {
+      toastError(err.message || 'Already checked in today');
     }
-  }
+  });
 
-  // Function to update only the balance display without re-rendering the whole page
-  function updateBalanceDisplay() {
-    const balanceEl = document.getElementById('balance-amount');
-    const incomeEl = document.getElementById('cumulative-income');
-    if (balanceEl) balanceEl.textContent = `RWF ${user.balance.toFixed(2)}`;
-    if (incomeEl) incomeEl.textContent = `RWF ${user.cumulativeIncome.toFixed(2)}`;
-  }
-
-  // Dummy transactions (replace with real API call later)
-  const transactions = [
-    { type: 'Recharge', amount: 6000, ref: '******8102', date: '07/25/2026' },
-    { type: 'Recharge', amount: 250000, ref: '******4512', date: '07/24/2026' },
-    { type: 'Recharge', amount: 100000, ref: '******3682R', date: '07/23/2026' },
-    { type: 'Withdraw', amount: -3125, ref: '******9301', date: '07/22/2026' }
-  ];
-
-  app.innerHTML = `
-    <div style="padding: 12px 0 8px;">
-      <img src="assets/images/home-up.png" alt="auto" style="width:100%; border-radius:16px; margin-bottom:12px;" onerror="this.style.display='none'">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <span style="font-size:20px; font-weight:700; color:#FF6B00;">auto</span>
-        <span style="color:#8a94a6; font-size:13px;">${user.accountNumber || ''}</span>
-      </div>
-
-      <div class="card-glass" style="padding:16px 18px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <img src="assets/images/account-balance.png" alt="Balance" style="width:32px; height:32px;" onerror="this.style.display='none'">
-            <div>
-              <p style="color:#b0baca; font-size:12px;">Account balance</p>
-              <p id="balance-amount" style="font-size:26px; font-weight:700;">RWF ${user.balance?.toFixed(2) || '0.00'}</p>
-            </div>
-          </div>
-          <div style="display:flex; align-items:center; gap:8px;">
-            <img src="assets/images/cumulative-income.png" alt="Income" style="width:32px; height:32px;" onerror="this.style.display='none'">
-            <div style="text-align:right;">
-              <p style="color:#b0baca; font-size:12px;">Cumulative income</p>
-              <p id="cumulative-income" style="font-size:20px; font-weight:600; color:#4caf50;">RWF ${user.cumulativeIncome?.toFixed(2) || '0.00'}</p>
-            </div>
-          </div>
-        </div>
-        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px; margin-top:12px;">
-          <button class="btn btn-secondary" style="padding:8px 0; font-size:12px;" id="home-recharge">Recharge</button>
-          <button class="btn btn-secondary" style="padding:8px 0; font-size:12px;" id="home-withdraw">Withdraw</button>
-          <button class="btn btn-secondary" style="padding:8px 0; font-size:12px;" id="home-help">Help</button>
-          <button class="btn" style="padding:8px 0; font-size:12px; background:#FF6B00;" id="home-checkin">Check in</button>
-        </div>
-      </div>
-
-      <div style="margin-top:16px;">
-        <p style="color:#b0baca; font-size:13px; margin-bottom:8px;">Recent Activity</p>
-        ${transactions.map(t => `
-          <div style="background:#0a0e17; border-radius:12px; padding:10px 14px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; border-left:3px solid ${t.amount >= 0 ? '#4caf50' : '#f44336'};">
-            <div>
-              <p style="font-weight:500; color:#fff; font-size:14px;">${t.type} ${Math.abs(t.amount).toLocaleString()}</p>
-              <p style="font-size:11px; color:#6a7488;">${t.ref} · ${t.date}</p>
-            </div>
-            <p style="color:${t.amount >= 0 ? '#4caf50' : '#f44336'}; font-weight:600;">${t.amount >= 0 ? '+' : ''}RWF ${Math.abs(t.amount).toLocaleString()}</p>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-  `;
-
-  // Event listeners
-  document.getElementById('home-recharge').addEventListener('click', () => window.location.hash = 'recharge');
-  document.getElementById('home-withdraw').addEventListener('click', () => window.location.hash = 'withdraw');
-  document.getElementById('home-help').addEventListener('click', () => window.location.hash = 'customerService');
-  document.getElementById('home-checkin').addEventListener('click', () => window.location.hash = 'checkin');
-
-  // Bottom nav highlight
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-  const activeNav = document.querySelector('.nav-item[data-page="home"]');
-  if (activeNav) activeNav.classList.add('active');
-
-  // Refresh balance immediately and then every 2 seconds
-  await refreshBalance();
-  if (refreshInterval) clearInterval(refreshInterval);
-  refreshInterval = setInterval(refreshBalance, 2000); // <-- CHANGED TO 2 SECONDS
-
-  // Show launch notification (once per session)
-  showLaunchNotification();
-}
-
-function showLaunchNotification() {
-  if (sessionStorage.getItem('launchShown') === 'true') return;
-  // ... existing launch notification code
-}
-
-// Optional: clean up interval when leaving the page
-export function cleanupHome() {
-  if (refreshInterval) {
-    clearInterval(refreshInterval);
-    refreshInterval = null;
-  }
+  // Buy buttons
+  document.querySelectorAll('.product-buy').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const id = e.target.dataset.id;
+      const price = parseFloat(e.target.dataset.price);
+      if (user.balance < price) {
+        toastError('Insufficient balance');
+        return;
+      }
+      try {
+        await apiCall('/investments/purchase', { method: 'POST', body: JSON.stringify({ productId: id }) });
+        toastSuccess('Purchase successful!');
+        user.balance -= price;
+        localStorage.setItem('user', JSON.stringify(user));
+        setTimeout(() => window.location.hash = 'myproduct', 1000);
+      } catch (err) {
+        toastError(err.message);
+      }
+    });
+  });
 }
