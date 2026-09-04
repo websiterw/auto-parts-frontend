@@ -40,8 +40,7 @@ export async function renderHome() {
       <div style="position:relative; width:100%; height:200px; background: #22c55e; overflow:hidden;">
         <img src="assets/images/home-banner.png" alt="Style House" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'">
         <div style="position:absolute; inset:0; background:rgba(0,0,0,0.25);"></div>
-        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:32px; font-weight:900; letter-spacing:2px; text-shadow:0 2px 10px rgba(0,0,0,0.3);">SUPERMARKET</div>
-        <div style="position:absolute; bottom:12px; left:50%; transform:translateX(-50%); color:#fff; font-size:13px; font-weight:600; text-shadow:0 2px 8px rgba(0,0,0,0.5);">FRESH. QUALITY. EVERYDAY.</div>
+        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:32px; font-weight:900; letter-spacing:2px; text-shadow:0 2px 10px rgba(0,0,0,0.3);">GreenBasket</div>
       </div>
 
       <!-- QUICK ACTIONS -->
@@ -103,7 +102,7 @@ export async function renderHome() {
         </div>
       </div>
 
-      <!-- PRODUCTS SECTION -->
+      // PRODUCTS SECTION -->
       <h2 style="text-align:center; font-size:20px; font-weight:900; color:#16a34a; margin:16px 0 8px;">Products</h2>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:0 16px 12px;" id="product-grid">
         ${products.slice(0, 4).map(p => `
@@ -128,20 +127,32 @@ export async function renderHome() {
     </div>
   `;
 
+  // ============================================
+  // SHOW LAUNCH NOTIFICATION (once per session)
+  // ============================================
+  showLaunchNotification();
+
+  // ============================================
+  // EVENT LISTENERS
+  // ============================================
+
   // Check-in
-  document.getElementById('checkin-btn').addEventListener('click', async () => {
-    try {
-      const data = await checkin();
-      toastSuccess(`Check-in successful! +RWF ${data.amount || 100}`);
-      const fresh = await getMe();
-      user.balance = fresh.balance;
-      user.cumulativeIncome = fresh.cumulativeIncome;
-      localStorage.setItem('user', JSON.stringify(user));
-      renderHome();
-    } catch (err) {
-      toastError(err.message || 'Already checked in today');
-    }
-  });
+  const checkinBtn = document.getElementById('checkin-btn');
+  if (checkinBtn) {
+    checkinBtn.addEventListener('click', async () => {
+      try {
+        const data = await checkin();
+        toastSuccess(`Check-in successful! +RWF ${data.amount || 100}`);
+        const fresh = await getMe();
+        user.balance = fresh.balance;
+        user.cumulativeIncome = fresh.cumulativeIncome;
+        localStorage.setItem('user', JSON.stringify(user));
+        renderHome();
+      } catch (err) {
+        toastError(err.message || 'Already checked in today');
+      }
+    });
+  }
 
   // Buy buttons
   document.querySelectorAll('.product-buy').forEach(btn => {
@@ -163,84 +174,84 @@ export async function renderHome() {
       }
     });
   });
-
-  // ✅ SHOW WELCOME POPUP EVERY TIME HOME IS LOADED
-  showWelcomePopup(user);
 }
 
 // ============================================
-// WELCOME POPUP – shows every time Home loads
+// LAUNCH NOTIFICATION (matches your screenshot)
 // ============================================
-function showWelcomePopup(user) {
-  // Remove existing popup if any
-  const existing = document.getElementById('welcome-popup-overlay');
-  if (existing) existing.remove();
+function showLaunchNotification() {
+  // Check if already shown in this session
+  if (sessionStorage.getItem('launchShown') === 'true') return;
 
+  // Create overlay
   const overlay = document.createElement('div');
-  overlay.id = 'welcome-popup-overlay';
+  overlay.id = 'launch-overlay';
   overlay.style.cssText = `
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0,0,0,0.6);
-    z-index: 999999;
+    background: rgba(0,0,0,0.7);
+    z-index: 99999;
     display: flex;
     align-items: center;
     justify-content: center;
     animation: fadeIn 0.3s ease;
   `;
 
+  // Create popup
   const popup = document.createElement('div');
   popup.style.cssText = `
-    background: #fff;
+    background: #141c2b;
     border-radius: 20px;
-    max-width: 380px;
+    max-width: 400px;
     width: 92%;
-    padding: 28px 24px 20px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    text-align: center;
-    border: 2px solid #22c55e;
+    padding: 24px 20px 20px;
+    border: 1px solid #2a3040;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
     max-height: 90vh;
     overflow-y: auto;
   `;
 
-  // Get account number (last 4 digits for display)
-  const accountDisplay = user.accountNumber ? `****${user.accountNumber.slice(-4)}` : '****';
-
   popup.innerHTML = `
-    <!-- Green checkmark icon -->
-    <div style="width:64px; height:64px; border-radius:50%; background:#22c55e; display:flex; align-items:center; justify-content:center; margin:0 auto 12px;">
-      <i class="fas fa-check" style="color:#fff; font-size:30px;"></i>
+    <!-- Title -->
+    <h2 style="color: #FF6B00; font-size: 20px; font-weight: 700; text-align: center; margin: 0 0 4px 0;">
+      Auto parts Rwanda Officially Launched
+    </h2>
+    <p style="color: #b0baca; font-size: 14px; text-align: center; margin: 0 0 16px 0;">
+      A brand new experience begins July 18, 2026!
+    </p>
+
+    <!-- Bullet points -->
+    <ul style="list-style: none; padding: 0; margin: 0 0 20px 0; font-size: 13px; color: #d0d8e8; line-height: 1.7;">
+      <li style="padding: 4px 0; border-bottom: 1px solid #1e2838;">✓ Invest RWF 5,000 and you can apply for a withdrawal of RWF 3,000</li>
+      <li style="padding: 4px 0; border-bottom: 1px solid #1e2838;">✓ Registration Bonus: RWF 3,000</li>
+      <li style="padding: 4px 0; border-bottom: 1px solid #1e2838;">✓ Daily Check-in: RWF 50</li>
+      <li style="padding: 4px 0; border-bottom: 1px solid #1e2838;">✓ Invite friends to participate and earn up to 38% cash rewards</li>
+      <li style="padding: 4px 0; border-bottom: 1px solid #1e2838;">✓ Daily Return Rate 20%-40%</li>
+      <li style="padding: 4px 0; border-bottom: 1px solid #1e2838;">✓ Product earnings are automatically deposited into your account daily</li>
+      <li style="padding: 4px 0;">✓ Purchase multiple devices to enjoy more earning opportunities</li>
+    </ul>
+
+    <!-- Buttons -->
+    <div style="display: flex; gap: 10px; margin-top: 8px;">
+      <button id="launch-telegram" style="flex: 1; padding: 12px; border: none; border-radius: 30px; background: #FF6B00; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer;">
+        Telegram <i class="fas fa-chevron-right" style="font-size: 12px; margin-left: 4px;"></i>
+      </button>
+      <button id="launch-ok" style="flex: 1; padding: 12px; border: 1px solid #2a3040; border-radius: 30px; background: transparent; color: #b0baca; font-weight: 600; font-size: 15px; cursor: pointer;">
+        OK
+      </button>
     </div>
-
-    <h2 style="color:#16a34a; font-size:20px; font-weight:900; margin:0 0 4px 0;">Welcome Back!</h2>
-    <p style="color:#6b6b6b; font-size:14px; margin:0 0 16px 0;">Account: ${accountDisplay}</p>
-
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:12px 0 16px;">
-      <div style="background:#f0fdf4; border-radius:12px; padding:10px; border:1px solid #22c55e;">
-        <p style="color:#6b6b6b; font-size:10px;">Balance</p>
-        <p style="color:#dc2626; font-size:18px; font-weight:900;">RWF ${(user.balance || 0).toFixed(2)}</p>
-      </div>
-      <div style="background:#f0fdf4; border-radius:12px; padding:10px; border:1px solid #22c55e;">
-        <p style="color:#6b6b6b; font-size:10px;">Income</p>
-        <p style="color:#16a34a; font-size:18px; font-weight:900;">RWF ${(user.cumulativeIncome || 0).toFixed(2)}</p>
-      </div>
-    </div>
-
-    <button id="popup-ok" style="background:#22c55e; color:#fff; border:none; border-radius:30px; padding:12px 40px; font-weight:700; font-size:16px; cursor:pointer; width:100%;">
-      Continue
-    </button>
   `;
 
   overlay.appendChild(popup);
   document.body.appendChild(overlay);
 
-  // Add fade animation if not present
-  if (!document.getElementById('popup-styles')) {
+  // Add fade-in keyframes if not already present
+  if (!document.getElementById('launch-styles')) {
     const style = document.createElement('style');
-    style.id = 'popup-styles';
+    style.id = 'launch-styles';
     style.textContent = `
       @keyframes fadeIn {
         from { opacity: 0; transform: scale(0.95); }
@@ -250,13 +261,23 @@ function showWelcomePopup(user) {
     document.head.appendChild(style);
   }
 
-  // Close popup
-  document.getElementById('popup-ok').addEventListener('click', () => {
-    overlay.remove();
+  // Telegram button → open Telegram
+  document.getElementById('launch-telegram').addEventListener('click', () => {
+    window.open('https://t.me/your_telegram_bot', '_blank');
+    // Don't close – user can still click OK
   });
 
-  // Click outside to close
+  // OK button → close and remember for this session
+  document.getElementById('launch-ok').addEventListener('click', () => {
+    overlay.remove();
+    sessionStorage.setItem('launchShown', 'true');
+  });
+
+  // Click outside the popup – close (optional)
   overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) overlay.remove();
+    if (e.target === overlay) {
+      overlay.remove();
+      sessionStorage.setItem('launchShown', 'true');
+    }
   });
 }
