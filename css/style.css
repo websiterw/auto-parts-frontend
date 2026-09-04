@@ -20,8 +20,8 @@ body {
 
 /* ---------- COLOURS ---------- */
 :root {
-  --green: #22c55e;
-  --green-dark: #16a34a;
+  --green: #2E6F40;
+  --green-dark: #1F4D2B;
   --red: #dc2626;
   --gold: #d99b1c;
   --bg: #f5f5f5;
@@ -134,7 +134,7 @@ body {
   height: 120px;
   object-fit: contain;
   border-radius: 12px;
-  background: #f0fdf4;
+  background: #EDF4F0;
 }
 
 /* ---------- MISC ---------- */
