@@ -31,7 +31,7 @@ export async function renderWithdraw() {
           <div style="position:absolute; inset:0; background:rgba(0,0,0,0.25);"></div>
           <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:28px; font-weight:900; letter-spacing:2px; text-shadow:0 2px 10px rgba(0,0,0,0.3);">WITHDRAWAL</div>
         </div>
-        <div style="padding:0 16px; margin-top:-20px;">
+        <div style="padding:0 16px; margin-top:100px;">
           <div style="background:#fff; border-radius:16px; padding:20px; border:2px solid ${GOLD}; text-align:center;">
             <span style="font-size:32px;">⏳</span>
             <p style="color:#16a34a; font-weight:bold; font-size:18px; margin-top:8px;">Processing</p>
