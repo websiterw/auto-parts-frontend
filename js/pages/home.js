@@ -34,7 +34,7 @@ export async function renderHome() {
   const totalDaily = investments.reduce((sum, inv) => sum + (inv.dailyIncome || 0), 0);
 
   app.innerHTML = `
-    <div style="min-height:100vh; background:#f5f5f5; padding-bottom:80px;">
+    <div style="min-height:100vh; background:#0f1624; padding-bottom:80px;">
 
       <!-- HERO BANNER -->
       <div style="position:relative; width:100%; height:200px; background: #FF6B00; overflow:hidden;">
@@ -44,35 +44,35 @@ export async function renderHome() {
       </div>
 
       <!-- QUICK ACTIONS -->
-      <div style="background:#fff; border-radius:16px; border:2px solid #FF6B00; margin:-16px 16px 12px; padding:12px 8px; display:grid; grid-template-columns:repeat(5,1fr); gap:4px; box-shadow:0 4px 12px rgba(0,0,0,0.05);">
+      <div style="background:#141c2b; border-radius:16px; border:2px solid #FF6B00; margin:-16px 16px 12px; padding:12px 8px; display:grid; grid-template-columns:repeat(5,1fr); gap:4px; box-shadow:0 4px 12px rgba(0,0,0,0.3);">
         <button onclick="window.location.hash='recharge'" style="display:flex; flex-direction:column; align-items:center; gap:4px; background:none; border:none; cursor:pointer; padding:4px;">
           <span style="width:40px; height:40px; border-radius:50%; background:#FF6B00; display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px;"><i class="fas fa-wallet"></i></span>
-          <span style="font-size:10px; font-weight:700; color:#e65c00;">Recharge</span>
+          <span style="font-size:10px; font-weight:700; color:#FF6B00;">Recharge</span>
         </button>
         <button onclick="window.location.hash='withdraw'" style="display:flex; flex-direction:column; align-items:center; gap:4px; background:none; border:none; cursor:pointer; padding:4px;">
           <span style="width:40px; height:40px; border-radius:50%; background:#FF6B00; display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px;"><i class="fas fa-arrow-up"></i></span>
-          <span style="font-size:10px; font-weight:700; color:#e65c00;">Withdraw</span>
+          <span style="font-size:10px; font-weight:700; color:#FF6B00;">Withdraw</span>
         </button>
         <button onclick="window.location.hash='team'" style="display:flex; flex-direction:column; align-items:center; gap:4px; background:none; border:none; cursor:pointer; padding:4px;">
           <span style="width:40px; height:40px; border-radius:50%; background:#FF6B00; display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px;"><i class="fas fa-users"></i></span>
-          <span style="font-size:10px; font-weight:700; color:#e65c00;">Team</span>
+          <span style="font-size:10px; font-weight:700; color:#FF6B00;">Team</span>
         </button>
         <button id="home-checkin-btn" style="display:flex; flex-direction:column; align-items:center; gap:4px; background:none; border:none; cursor:pointer; padding:4px;">
           <span style="width:40px; height:40px; border-radius:50%; background:#FF6B00; display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px;"><i class="fas fa-check"></i></span>
-          <span style="font-size:10px; font-weight:700; color:#e65c00;">Check in</span>
+          <span style="font-size:10px; font-weight:700; color:#FF6B00;">Check in</span>
         </button>
         <button onclick="window.location.hash='customerService'" style="display:flex; flex-direction:column; align-items:center; gap:4px; background:none; border:none; cursor:pointer; padding:4px;">
           <span style="width:40px; height:40px; border-radius:50%; background:#FF6B00; display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px;"><i class="fas fa-headset"></i></span>
-          <span style="font-size:10px; font-weight:700; color:#e65c00;">Help</span>
+          <span style="font-size:10px; font-weight:700; color:#FF6B00;">Help</span>
         </button>
       </div>
 
       <!-- SCROLLING TICKER -->
-      <div style="margin:0 16px 12px; background:#fff; border-radius:12px; border:2px solid #FF6B00; padding:8px 12px; overflow:hidden;">
+      <div style="margin:0 16px 12px; background:#141c2b; border-radius:12px; border:2px solid #FF6B00; padding:8px 12px; overflow:hidden;">
         <div style="display:flex; gap:12px; align-items:center;">
           <span style="color:#FF6B00; font-size:18px;">🔔</span>
           <div style="flex:1; overflow:hidden;">
-            <p style="white-space:nowrap; animation: ticker 18s linear infinite; color:#e65c00; font-size:13px; font-weight:600;">
+            <p style="white-space:nowrap; animation: ticker 18s linear infinite; color:#FF6B00; font-size:13px; font-weight:600;">
               🛒 ****${(user.accountNumber || '').slice(-4) || '0000'} bought sneakers RWF 25,000 · ****3326 bought a dress RWF 40,000 · ****5557 recharged RWF 10,000
             </p>
           </div>
@@ -81,42 +81,42 @@ export async function renderHome() {
 
       <!-- BALANCE CARDS -->
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:0 16px 12px;">
-        <div style="background:#fff; border-radius:16px; padding:12px; border:2px solid #FF6B00; text-align:center;">
-          <p style="color:#6b6b6b; font-size:11px;">Account balance</p>
+        <div style="background:#141c2b; border-radius:16px; padding:12px; border:2px solid #FF6B00; text-align:center;">
+          <p style="color:#b0baca; font-size:11px;">Account balance</p>
           <p style="font-size:22px; font-weight:900; color:#FF6B00;">RWF ${(user.balance || 0).toFixed(2)}</p>
         </div>
-        <div style="background:#fff; border-radius:16px; padding:12px; border:2px solid #FF6B00; text-align:center;">
-          <p style="color:#6b6b6b; font-size:11px;">Cumulative income</p>
-          <p style="font-size:22px; font-weight:900; color:#FF6B00;">RWF ${(user.cumulativeIncome || 0).toFixed(2)}</p>
+        <div style="background:#141c2b; border-radius:16px; padding:12px; border:2px solid #FF6B00; text-align:center;">
+          <p style="color:#b0baca; font-size:11px;">Cumulative income</p>
+          <p style="font-size:22px; font-weight:900; color:#4caf50;">RWF ${(user.cumulativeIncome || 0).toFixed(2)}</p>
         </div>
       </div>
 
       <!-- DAILY CHECK-IN -->
-      <div style="margin:0 16px 12px; background:#fff; border-radius:16px; padding:16px; border:2px solid #FF6B00;">
+      <div style="margin:0 16px 12px; background:#141c2b; border-radius:16px; padding:16px; border:2px solid #FF6B00;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <div>
-            <p style="font-weight:900; color:#e65c00; font-size:15px;">Daily check-in</p>
-            <p style="font-size:12px; color:#6b6b6b;">Claim 1% of your balance (min RWF 100) — once every 24 hours</p>
+            <p style="font-weight:900; color:#FF6B00; font-size:15px;">Daily check-in</p>
+            <p style="font-size:12px; color:#b0baca;">Claim 1% of your balance (min RWF 100) — once every 24 hours</p>
           </div>
           <button id="checkin-btn" style="background:#FF6B00; color:#fff; border:none; border-radius:30px; padding:8px 20px; font-weight:700; cursor:pointer;">Claim</button>
         </div>
       </div>
 
       <!-- PRODUCTS SECTION -->
-      <h2 style="text-align:center; font-size:20px; font-weight:900; color:#e65c00; margin:16px 0 8px;">Products</h2>
+      <h2 style="text-align:center; font-size:20px; font-weight:900; color:#FF6B00; margin:16px 0 8px;">Products</h2>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:0 16px 12px;" id="product-grid">
         ${products.slice(0, 4).map(p => `
-          <div style="background:#fff; border-radius:12px; padding:12px; border:2px solid #FF6B00;">
-            <img src="assets/images/product-vip${p.level || 1}.png" alt="${p.name}" style="width:100%; height:90px; object-fit:contain; border-radius:8px; background:#f5f5f5;" onerror="this.style.display='none'">
-            <p style="font-weight:900; color:#e65c00; font-size:12px; margin-top:4px;">${p.name}</p>
+          <div style="background:#141c2b; border-radius:12px; padding:12px; border:2px solid #FF6B00;">
+            <img src="assets/images/product-vip${p.level || 1}.png" alt="${p.name}" style="width:100%; height:90px; object-fit:contain; border-radius:8px; background:#0a0e17;" onerror="this.style.display='none'">
+            <p style="font-weight:900; color:#fff; font-size:12px; margin-top:4px;">${p.name}</p>
             <p style="font-weight:900; color:#FF6B00; font-size:14px;">RWF ${p.price}</p>
-            <p style="font-size:11px; color:#e65c00;">Daily: RWF ${p.dailyIncome}</p>
-            <p style="font-size:10px; color:#6b6b6b;">${p.termDays} days total: RWF ${p.totalIncome}</p>
+            <p style="font-size:11px; color:#b0baca;">Daily: RWF ${p.dailyIncome}</p>
+            <p style="font-size:10px; color:#6a7488;">${p.termDays} days total: RWF ${p.totalIncome}</p>
             <button class="product-buy" data-id="${p._id}" data-price="${p.price}" style="width:100%; background:#FF6B00; color:#fff; border:none; border-radius:30px; padding:6px; font-size:12px; font-weight:700; cursor:pointer; margin-top:6px;">Buy</button>
           </div>
         `).join('')}
       </div>
-      <button onclick="window.location.hash='product'" style="display:block; margin:0 16px 16px; width:calc(100% - 32px); background:transparent; border:2px solid #FF6B00; border-radius:30px; padding:10px; font-weight:700; color:#e65c00; cursor:pointer;">See all products</button>
+      <button onclick="window.location.hash='product'" style="display:block; margin:0 16px 16px; width:calc(100% - 32px); background:transparent; border:2px solid #FF6B00; border-radius:30px; padding:10px; font-weight:700; color:#FF6B00; cursor:pointer;">See all products</button>
 
       <style>
         @keyframes ticker {
@@ -170,7 +170,7 @@ export async function renderHome() {
 }
 
 // ============================================
-// 🎉 LAUNCH NOTIFICATION FUNCTION – SHOWS EVERY TIME
+// 🎉 LAUNCH NOTIFICATION FUNCTION – ORANGE THEME
 // ============================================
 function showLaunchNotification() {
   // Remove any existing overlay
@@ -186,7 +186,7 @@ function showLaunchNotification() {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0,0,0,0.75);
+    background: rgba(0,0,0,0.85);
     z-index: 99999;
     display: flex;
     align-items: center;
@@ -202,8 +202,8 @@ function showLaunchNotification() {
     max-width: 400px;
     width: 92%;
     padding: 24px 20px 20px;
-    border: 1px solid #2a3040;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    border: 2px solid #FF6B00;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.9);
     max-height: 90vh;
     overflow-y: auto;
   `;
@@ -233,7 +233,7 @@ function showLaunchNotification() {
       <button id="launch-telegram" style="flex: 1; padding: 12px; border: none; border-radius: 30px; background: #FF6B00; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer;">
         Telegram <i class="fas fa-chevron-right" style="font-size: 12px; margin-left: 4px;"></i>
       </button>
-      <button id="launch-ok" style="flex: 1; padding: 12px; border: 1px solid #2a3040; border-radius: 30px; background: transparent; color: #b0baca; font-weight: 600; font-size: 15px; cursor: pointer;">
+      <button id="launch-ok" style="flex: 1; padding: 12px; border: 2px solid #FF6B00; border-radius: 30px; background: transparent; color: #FF6B00; font-weight: 600; font-size: 15px; cursor: pointer;">
         OK
       </button>
     </div>
@@ -260,7 +260,7 @@ function showLaunchNotification() {
     window.open('https://t.me/your_telegram_bot', '_blank');
   });
 
-  // OK button – closes popup (no sessionStorage, so it appears again next time)
+  // OK button – closes popup
   document.getElementById('launch-ok').addEventListener('click', () => {
     overlay.remove();
   });
