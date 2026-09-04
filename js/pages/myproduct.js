@@ -21,7 +21,7 @@ export async function renderMyProduct() {
       <div style="position:absolute; inset:0; background:rgba(0,0,0,0.25);"></div>
       <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:26px; font-weight:900; letter-spacing:2px; text-shadow:0 2px 10px rgba(0,0,0,0.3);">My product</div>
     </div>
-    <div style="padding:0 16px; margin-top:-10px;">
+    <div style="padding:0 16px; margin-top:40px;">
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
         <div style="background:#fff; border-radius:12px; padding:12px; border:2px solid #2E6F40; text-align:center;">
           <p style="color:#6b6b6b; font-size:11px;">Active products</p>
