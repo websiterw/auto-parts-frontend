@@ -38,7 +38,7 @@ export async function renderHome() {
 
       <!-- HERO BANNER -->
       <div style="position:relative; width:100%; height:200px; background: #22c55e; overflow:hidden;">
-        <img src="assets/images/home-banner.png" alt="Style House" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'">
+        <img src="assets/images/home-banner.png" alt="GreenBasket" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'">
         <div style="position:absolute; inset:0; background:rgba(0,0,0,0.25);"></div>
         <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:32px; font-weight:900; letter-spacing:2px; text-shadow:0 2px 10px rgba(0,0,0,0.3);">GreenBasket</div>
       </div>
@@ -102,7 +102,7 @@ export async function renderHome() {
         </div>
       </div>
 
-      // PRODUCTS SECTION -->
+      <!-- PRODUCTS SECTION -->
       <h2 style="text-align:center; font-size:20px; font-weight:900; color:#16a34a; margin:16px 0 8px;">Products</h2>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:0 16px 12px;" id="product-grid">
         ${products.slice(0, 4).map(p => `
@@ -127,32 +127,23 @@ export async function renderHome() {
     </div>
   `;
 
-  // ============================================
-  // SHOW LAUNCH NOTIFICATION (once per session)
-  // ============================================
-  showLaunchNotification();
-
-  // ============================================
-  // EVENT LISTENERS
-  // ============================================
+  // ----- Show Launch Popup EVERY TIME (not just once) -----
+  showGreenBasketPopup();
 
   // Check-in
-  const checkinBtn = document.getElementById('checkin-btn');
-  if (checkinBtn) {
-    checkinBtn.addEventListener('click', async () => {
-      try {
-        const data = await checkin();
-        toastSuccess(`Check-in successful! +RWF ${data.amount || 100}`);
-        const fresh = await getMe();
-        user.balance = fresh.balance;
-        user.cumulativeIncome = fresh.cumulativeIncome;
-        localStorage.setItem('user', JSON.stringify(user));
-        renderHome();
-      } catch (err) {
-        toastError(err.message || 'Already checked in today');
-      }
-    });
-  }
+  document.getElementById('checkin-btn').addEventListener('click', async () => {
+    try {
+      const data = await checkin();
+      toastSuccess(`Check-in successful! +RWF ${data.amount || 100}`);
+      const fresh = await getMe();
+      user.balance = fresh.balance;
+      user.cumulativeIncome = fresh.cumulativeIncome;
+      localStorage.setItem('user', JSON.stringify(user));
+      renderHome();
+    } catch (err) {
+      toastError(err.message || 'Already checked in today');
+    }
+  });
 
   // Buy buttons
   document.querySelectorAll('.product-buy').forEach(btn => {
@@ -176,16 +167,15 @@ export async function renderHome() {
   });
 }
 
-// ============================================
-// LAUNCH NOTIFICATION (matches your screenshot)
-// ============================================
-function showLaunchNotification() {
-  // Check if already shown in this session
-  if (sessionStorage.getItem('launchShown') === 'true') return;
+// ----- GreenBasket POPUP (appears every time Home loads) -----
+function showGreenBasketPopup() {
+  // Remove any existing popup
+  const existing = document.getElementById('greenbasket-popup');
+  if (existing) existing.remove();
 
   // Create overlay
   const overlay = document.createElement('div');
-  overlay.id = 'launch-overlay';
+  overlay.id = 'greenbasket-popup';
   overlay.style.cssText = `
     position: fixed;
     top: 0;
@@ -203,43 +193,52 @@ function showLaunchNotification() {
   // Create popup
   const popup = document.createElement('div');
   popup.style.cssText = `
-    background: #141c2b;
+    background: #ffffff;
     border-radius: 20px;
     max-width: 400px;
     width: 92%;
-    padding: 24px 20px 20px;
-    border: 1px solid #2a3040;
+    padding: 28px 24px 24px;
+    border: 3px solid #22c55e;
     box-shadow: 0 20px 60px rgba(0,0,0,0.8);
     max-height: 90vh;
     overflow-y: auto;
+    position: relative;
   `;
 
   popup.innerHTML = `
+    <!-- Close button (X) -->
+    <button id="popup-close-btn" style="position:absolute; top:12px; right:16px; background:none; border:none; font-size:24px; color:#6b6b6b; cursor:pointer;">×</button>
+
+    <!-- Logo / Icon -->
+    <div style="text-align:center; margin-bottom:8px;">
+      <span style="font-size:48px;">🛒</span>
+    </div>
+
     <!-- Title -->
-    <h2 style="color: #FF6B00; font-size: 20px; font-weight: 700; text-align: center; margin: 0 0 4px 0;">
-      Auto parts Rwanda Officially Launched
+    <h2 style="color: #22c55e; font-size: 22px; font-weight: 900; text-align: center; margin: 0 0 4px 0;">
+      GreenBasket
     </h2>
-    <p style="color: #b0baca; font-size: 14px; text-align: center; margin: 0 0 16px 0;">
-      A brand new experience begins July 18, 2026!
+    <p style="color: #16a34a; font-size: 14px; font-weight: 600; text-align: center; margin: 0 0 16px 0;">
+      FRESH. QUALITY. EVERYDAY.
     </p>
 
     <!-- Bullet points -->
-    <ul style="list-style: none; padding: 0; margin: 0 0 20px 0; font-size: 13px; color: #d0d8e8; line-height: 1.7;">
-      <li style="padding: 4px 0; border-bottom: 1px solid #1e2838;">✓ Invest RWF 5,000 and you can apply for a withdrawal of RWF 3,000</li>
-      <li style="padding: 4px 0; border-bottom: 1px solid #1e2838;">✓ Registration Bonus: RWF 3,000</li>
-      <li style="padding: 4px 0; border-bottom: 1px solid #1e2838;">✓ Daily Check-in: RWF 50</li>
-      <li style="padding: 4px 0; border-bottom: 1px solid #1e2838;">✓ Invite friends to participate and earn up to 38% cash rewards</li>
-      <li style="padding: 4px 0; border-bottom: 1px solid #1e2838;">✓ Daily Return Rate 20%-40%</li>
-      <li style="padding: 4px 0; border-bottom: 1px solid #1e2838;">✓ Product earnings are automatically deposited into your account daily</li>
-      <li style="padding: 4px 0;">✓ Purchase multiple devices to enjoy more earning opportunities</li>
+    <ul style="list-style: none; padding: 0; margin: 0 0 20px 0; font-size: 13px; color: #333; line-height: 1.8;">
+      <li style="padding: 6px 0; border-bottom: 1px solid #e5e7eb;">✅ Invest RWF 5,000 and you can apply for a withdrawal of RWF 3,000</li>
+      <li style="padding: 6px 0; border-bottom: 1px solid #e5e7eb;">✅ Registration Bonus: RWF 3,000</li>
+      <li style="padding: 6px 0; border-bottom: 1px solid #e5e7eb;">✅ Daily Check-in: RWF 50</li>
+      <li style="padding: 6px 0; border-bottom: 1px solid #e5e7eb;">✅ Invite friends to participate and earn up to 38% cash rewards</li>
+      <li style="padding: 6px 0; border-bottom: 1px solid #e5e7eb;">✅ Daily Return Rate 20%-40%</li>
+      <li style="padding: 6px 0; border-bottom: 1px solid #e5e7eb;">✅ Product earnings are automatically deposited into your account daily</li>
+      <li style="padding: 6px 0;">✅ Purchase multiple devices to enjoy more earning opportunities</li>
     </ul>
 
     <!-- Buttons -->
-    <div style="display: flex; gap: 10px; margin-top: 8px;">
-      <button id="launch-telegram" style="flex: 1; padding: 12px; border: none; border-radius: 30px; background: #FF6B00; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer;">
+    <div style="display: flex; gap: 10px;">
+      <button id="popup-telegram" style="flex: 1; padding: 12px; border: none; border-radius: 30px; background: #22c55e; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer;">
         Telegram <i class="fas fa-chevron-right" style="font-size: 12px; margin-left: 4px;"></i>
       </button>
-      <button id="launch-ok" style="flex: 1; padding: 12px; border: 1px solid #2a3040; border-radius: 30px; background: transparent; color: #b0baca; font-weight: 600; font-size: 15px; cursor: pointer;">
+      <button id="popup-ok" style="flex: 1; padding: 12px; border: 2px solid #22c55e; border-radius: 30px; background: transparent; color: #16a34a; font-weight: 700; font-size: 15px; cursor: pointer;">
         OK
       </button>
     </div>
@@ -248,10 +247,10 @@ function showLaunchNotification() {
   overlay.appendChild(popup);
   document.body.appendChild(overlay);
 
-  // Add fade-in keyframes if not already present
-  if (!document.getElementById('launch-styles')) {
+  // Add fade-in animation
+  if (!document.getElementById('popup-styles')) {
     const style = document.createElement('style');
-    style.id = 'launch-styles';
+    style.id = 'popup-styles';
     style.textContent = `
       @keyframes fadeIn {
         from { opacity: 0; transform: scale(0.95); }
@@ -261,23 +260,24 @@ function showLaunchNotification() {
     document.head.appendChild(style);
   }
 
-  // Telegram button → open Telegram
-  document.getElementById('launch-telegram').addEventListener('click', () => {
-    window.open('https://t.me/your_telegram_bot', '_blank');
-    // Don't close – user can still click OK
-  });
+  // Close popup function
+  function closePopup() {
+    if (overlay) overlay.remove();
+  }
 
-  // OK button → close and remember for this session
-  document.getElementById('launch-ok').addEventListener('click', () => {
-    overlay.remove();
-    sessionStorage.setItem('launchShown', 'true');
-  });
+  // OK button → close
+  document.getElementById('popup-ok').addEventListener('click', closePopup);
 
-  // Click outside the popup – close (optional)
+  // Close (X) button → close
+  document.getElementById('popup-close-btn').addEventListener('click', closePopup);
+
+  // Click outside → close
   overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) {
-      overlay.remove();
-      sessionStorage.setItem('launchShown', 'true');
-    }
+    if (e.target === overlay) closePopup();
+  });
+
+  // Telegram button → open Telegram (doesn't close popup)
+  document.getElementById('popup-telegram').addEventListener('click', () => {
+    window.open('https://t.me/your_telegram_bot', '_blank');
   });
 }
