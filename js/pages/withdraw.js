@@ -58,7 +58,7 @@ export async function renderWithdraw() {
         <div style="position:absolute; inset:0; background:rgba(0,0,0,0.25);"></div>
         <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:28px; font-weight:900; letter-spacing:2px; text-shadow:0 2px 10px rgba(0,0,0,0.3);">WITHDRAWAL</div>
       </div>
-      <div style="padding:0 16px; margin-top:-20px;">
+      <div style="padding:0 16px; margin-top:100px;">
         ${!hasProduct ? `<div style="background:#fdeaea; border:2px solid #dc2626; border-radius:12px; padding:12px; color:#dc2626; font-weight:600; font-size:14px; text-align:center; margin-bottom:16px;">You must buy a product before you can withdraw.</div>` : ''}
         <p style="font-weight:600; color:#343434; margin-bottom:4px;">My balance</p>
         <div style="background:#fff; border-radius:12px; padding:16px; border:2px solid ${GOLD}; display:flex; align-items:center; gap:12px; margin-bottom:16px;">
