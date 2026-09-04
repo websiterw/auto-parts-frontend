@@ -14,7 +14,7 @@ export async function renderTeam() {
       <div style="position:absolute; inset:0; background:rgba(0,0,0,0.25);"></div>
       <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:28px; font-weight:900; letter-spacing:2px; text-shadow:0 2px 10px rgba(0,0,0,0.3);">Team</div>
     </div>
-    <div style="padding:0 16px; margin-top:20px;">
+    <div style="padding:0 16px; margin-top:-20px;">
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
         <div style="background:#fff; border-radius:16px; padding:16px; border:2px solid #22c55e; text-align:center;">
           <p style="color:#6b6b6b; font-size:12px;">Team members</p>
