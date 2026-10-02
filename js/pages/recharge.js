@@ -100,7 +100,7 @@ export async function renderRecharge() {
       html = `
         <div style="position:fixed; inset:0; z-index:50; background:#f5f5f5; overflow-y:auto;">
           <div style="background:#2b2b2b; padding:16px; display:flex; justify-content:space-between; align-items:center;">
-            <span style="color:${GOLD}; font-weight:900; font-size:14px; letter-spacing:2px;">◎ STYLE HOUSE PAY</span>
+            <span style="color:${GOLD}; font-weight:900; font-size:14px; letter-spacing:2px;">◎AEROGROBALSHIPPING PAY</span>
             <button onclick="window.location.hash='home'" style="background:none; border:none; color:#fff; font-size:20px; cursor:pointer;">&times;</button>
           </div>
           <div style="padding:16px; max-width:400px; margin:0 auto;">
