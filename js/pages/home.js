@@ -33,6 +33,10 @@ export async function renderHome() {
 
   const totalDaily = investments.reduce((sum, inv) => sum + (inv.dailyIncome || 0), 0);
 
+  // ✅ Task Center – count of team members who invited AND invested
+  const invitedCount = team.totalUsers || 0;
+  const qualifiedCount = investments.length > 0 ? invitedCount : 0;
+
   app.innerHTML = `
     <div style="min-height:100vh; background:#f5f5f5; padding-bottom:80px;">
 
@@ -88,6 +92,25 @@ export async function renderHome() {
         <div style="background:#fff; border-radius:16px; padding:12px; border:2px solid #2E6F40; text-align:center;">
           <p style="color:#6b6b6b; font-size:11px;">Cumulative income</p>
           <p style="font-size:22px; font-weight:900; color:#dc2626;">RWF ${(user.cumulativeIncome || 0).toFixed(2)}</p>
+        </div>
+      </div>
+
+      <!-- ✅ TASK CENTER CARD (NEW) -->
+      <div onclick="window.location.hash='taskcenter'" style="margin:0 16px 12px; background:#fff; border-radius:16px; padding:16px; border:2px solid #2E6F40; display:flex; justify-content:space-between; align-items:center; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.05); transition:transform 0.15s;" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform='scale(1)'">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span style="width:44px; height:44px; border-radius:50%; background:#2E6F40; display:flex; align-items:center; justify-content:center; color:#fff; font-size:20px;">
+            <i class="fas fa-bullseye"></i>
+          </span>
+          <div>
+            <p style="font-weight:900; color:#2E6F40; font-size:15px; margin:0;">Task Center</p>
+            <p style="font-size:12px; color:#6b6b6b; margin:2px 0 0;">Invite friends & earn rewards</p>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="background:#EDF4F0; color:#2E6F40; font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px;">
+            ${qualifiedCount} qualified
+          </span>
+          <span style="color:#2E6F40; font-size:22px;">›</span>
         </div>
       </div>
 
@@ -292,3 +315,174 @@ function showGreenBasketPopup() {
     window.location.hash = 'rules';
   });
 }
+
+
+/* ============================================================
+   ✅ NEW FEATURE: TASK CENTER PAGE
+   Added below — does not modify any existing code above.
+   ============================================================ */
+
+export async function renderTaskCenter() {
+  const app = document.getElementById('app');
+
+  // Fetch user + team + investments
+  let user = JSON.parse(localStorage.getItem('user')) || { balance: 0 };
+  try {
+    const fresh = await getMe();
+    user = fresh;
+    localStorage.setItem('user', JSON.stringify(user));
+  } catch (e) {}
+
+  let team = { totalUsers: 0 };
+  let investments = [];
+  try {
+    const [teamData, inv] = await Promise.all([
+      getTeamData().catch(() => ({ totalUsers: 0 })),
+      getInvestments().catch(() => [])
+    ]);
+    team = teamData || team;
+    investments = inv || [];
+  } catch (e) {}
+
+  // ✅ Qualified invites = people who joined via your link AND invested
+  // (If backend team.totalUsers already counts only invested users, use it directly)
+  const investedCount = investments.length > 0 ? (team.totalUsers || 0) : 0;
+
+  // Task tiers
+  const tasks = [
+    { invites: 3,   reward: 1500,   icon: 'fa-user-plus' },
+    { invites: 5,   reward: 2500,   icon: 'fa-user-friends' },
+    { invites: 10,  reward: 7000,   icon: 'fa-users' },
+    { invites: 15,  reward: 10000,  icon: 'fa-user-group' },
+    { invites: 25,  reward: 150000, icon: 'fa-crown' }
+  ];
+
+  // Track which tasks have been claimed already
+  const claimed = JSON.parse(localStorage.getItem('taskClaims') || '{}');
+
+  app.innerHTML = `
+    <!-- Header -->
+    <div style="position:relative; width:100%; height:160px; background:#2E6F40; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+      <div style="position:absolute; inset:0; background:linear-gradient(135deg, rgba(0,0,0,0.25), rgba(0,0,0,0.05));"></div>
+      <div style="position:relative; text-align:center; color:#fff;">
+        <i class="fas fa-bullseye" style="font-size:34px; margin-bottom:6px; display:block;"></i>
+        <h1 style="font-size:24px; font-weight:900; letter-spacing:1px; margin:0;">Task Center</h1>
+        <p style="font-size:12px; opacity:0.9; margin-top:4px;">Invite friends · Earn rewards</p>
+      </div>
+    </div>
+
+    <div style="padding:16px;">
+
+      <!-- Back button -->
+      <button onclick="window.location.hash='home'" style="display:flex; align-items:center; gap:6px; background:#fff; border:2px solid #2E6F40; color:#2E6F40; border-radius:30px; padding:8px 16px; font-weight:700; font-size:13px; cursor:pointer; margin-bottom:16px;">
+        <i class="fas fa-arrow-left"></i> Back to Home
+      </button>
+
+      <!-- Progress summary -->
+      <div style="background:#EDF4F0; border-left:4px solid #2E6F40; border-radius:12px; padding:14px; margin-bottom:16px;">
+        <p style="font-size:13px; color:#1F4D2B; margin:0; line-height:1.6;">
+          You have <strong>${investedCount}</strong> qualified invite${investedCount === 1 ? '' : 's'}.
+          Only friends who joined <strong>and</strong> invested count toward your rewards.
+        </p>
+      </div>
+
+      <!-- Tasks list -->
+      ${tasks.map((task, idx) => {
+        const progress = Math.min(investedCount, task.invites);
+        const percent = Math.round((progress / task.invites) * 100);
+        const isDone = investedCount >= task.invites;
+        const isClaimed = claimed[`task_${task.invites}`];
+        return `
+          <div style="background:#fff; border-radius:14px; border:2px solid #2E6F40; margin-bottom:14px; overflow:hidden;">
+            <!-- Task header -->
+            <div style="padding:14px; display:flex; align-items:center; gap:12px; border-bottom:1px solid #EDF4F0;">
+              <div style="width:44px; height:44px; border-radius:50%; background:#2E6F40; display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px; flex-shrink:0;">
+                <i class="fas ${task.icon}"></i>
+              </div>
+              <div style="flex:1;">
+                <p style="margin:0; font-weight:900; font-size:14px; color:#2E6F40;">
+                  Invite ${task.invites} · Get RWF ${task.reward.toLocaleString()}
+                </p>
+                <p style="margin:2px 0 0; font-size:12px; color:#6b6b6b;">
+                  ${progress} / ${task.invites} qualified
+                </p>
+              </div>
+            </div>
+
+            <!-- Progress bar -->
+            <div style="padding:0 14px 12px;">
+              <div style="width:100%; height:10px; background:#EDF4F0; border-radius:10px; overflow:hidden; margin-top:12px;">
+                <div style="width:${percent}%; height:100%; background:#2E6F40; border-radius:10px; transition:width 0.4s ease;"></div>
+              </div>
+              <p style="font-size:11px; color:#6b6b6b; margin:6px 0 0; text-align:right;">${percent}%</p>
+            </div>
+
+            <!-- Claim / status button -->
+            <div style="padding:0 14px 14px;">
+              ${isClaimed ? `
+                <button disabled style="width:100%; padding:10px; border:none; border-radius:30px; background:#e5e5e5; color:#6b6b6b; font-weight:700; font-size:13px; cursor:not-allowed;">
+                  <i class="fas fa-check"></i> Claimed
+                </button>
+              ` : isDone ? `
+                <button onclick="claimTask(${task.invites}, ${task.reward})" style="width:100%; padding:10px; border:none; border-radius:30px; background:#dc2626; color:#fff; font-weight:700; font-size:13px; cursor:pointer;">
+                  🎁 Claim RWF ${task.reward.toLocaleString()}
+                </button>
+              ` : `
+                <button disabled style="width:100%; padding:10px; border:none; border-radius:30px; background:#f0f0f0; color:#999; font-weight:700; font-size:13px; cursor:not-allowed;">
+                  Locked — invite ${task.invites - investedCount} more
+                </button>
+              `}
+            </div>
+          </div>
+        `;
+      }).join('')}
+
+      <!-- Footer note -->
+      <div style="background:#fff; border-radius:12px; border:2px dashed #2E6F40; padding:14px; margin-bottom:24px; text-align:center;">
+        <i class="fas fa-circle-info" style="color:#2E6F40; font-size:20px; margin-bottom:6px; display:block;"></i>
+        <p style="font-size:12px; color:#1F4D2B; margin:0; line-height:1.5;">
+          Only friends who join through your invitation link <strong>and</strong> make an investment are counted as qualified invites.
+        </p>
+      </div>
+    </div>
+  `;
+
+  window.scrollTo(0, 0);
+}
+
+
+/* ============================================================
+   ✅ CLAIM HANDLER
+   ============================================================ */
+window.claimTask = async function (invitesRequired, reward) {
+  try {
+    // Prevent double-claim
+    const claimed = JSON.parse(localStorage.getItem('taskClaims') || '{}');
+    if (claimed[`task_${invitesRequired}`]) {
+      toastError('Already claimed');
+      return;
+    }
+
+    // Call backend to add reward to balance
+    // 👉 Adjust the endpoint below to match your backend route
+    await apiCall('/tasks/claim', {
+      method: 'POST',
+      body: JSON.stringify({ invitesRequired, reward })
+    });
+
+    // Mark claimed locally
+    claimed[`task_${invitesRequired}`] = true;
+    localStorage.setItem('taskClaims', JSON.stringify(claimed));
+
+    // Refresh user balance
+    const fresh = await getMe();
+    localStorage.setItem('user', JSON.stringify(fresh));
+
+    toastSuccess(`🎉 +RWF ${reward.toLocaleString()} added to your balance!`);
+
+    // Re-render
+    renderTaskCenter();
+  } catch (err) {
+    toastError(err.message || 'Claim failed');
+  }
+};
