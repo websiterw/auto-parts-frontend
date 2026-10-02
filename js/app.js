@@ -16,6 +16,7 @@ import { renderRecharge } from './pages/recharge.js';
 import { renderWithdraw } from './pages/withdraw.js';
 import { renderRecords } from './pages/records.js';
 import { renderCustomerService } from './pages/customerService.js';
+import { renderRules } from './pages/mine.js';   // ✅ ADD THIS (if rules is in mine.js)
 
 window.api = api;
 window.toastError = toastError;
