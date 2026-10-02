@@ -83,6 +83,7 @@ export async function renderMine() {
           { icon: 'fa-users', label: 'My team', action: "window.location.hash='team'" },
           { icon: 'fa-link', label: 'Invitation link', action: `navigator.clipboard.writeText('${window.location.origin}/#register?code=${code}'); window.toastSuccess('Link copied!')` },
           { icon: 'fa-headset', label: 'Customer service', action: "window.location.hash='customerService'" },
+          { icon: 'fa-scroll', label: 'Rules & Regulations', action: "window.location.hash='rules'" },
         ].map(item => `
           <div onclick="${item.action}" style="display:flex; align-items:center; gap:12px; padding:14px 16px; border-bottom:1px solid #f0f0f0; cursor:pointer; transition:background 0.1s;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='#fff'">
             <i class="fas ${item.icon}" style="color:#2E6F40; width:20px; text-align:center;"></i>
@@ -131,4 +132,169 @@ export async function renderMine() {
       toastError(err.message);
     }
   });
+}
+
+
+/* ============================================================
+   ✅ NEW FEATURE: RULES & REGULATIONS PAGE
+   Added below — does not modify any existing code above.
+   ============================================================ */
+
+export function renderRules() {
+  const app = document.getElementById('app');
+
+  const rules = [
+    {
+      title: '1. Account Registration and Duration',
+      icon: 'fa-user-plus',
+      points: [
+        'Every AEROGROBALSHIPPING employee/user must create and maintain only one valid account.',
+        'Each account is valid for a maximum period of 180 days, subject to the terms of the AEROGROBALSHIPPING program.',
+        'Users must provide accurate and valid information during registration.',
+        'Users are responsible for keeping their account information and login details secure.'
+      ]
+    },
+    {
+      title: '2. Account Recharge',
+      icon: 'fa-wallet',
+      points: [
+        'The minimum recharge amount is 6,000 RWF.',
+        'A user may recharge 3,000 RWF and, if eligible, receive a 3,000 RWF Welcome Bonus, giving a total balance of 6,000 RWF.',
+        'The 6,000 RWF balance may be used to purchase the first eligible product.',
+        'Recharge can be made through MTN MoMo or Airtel Money using the official payment instructions provided by AEROGROBALSHIPPING.',
+        "Before sending money, every user must carefully follow the provided payment procedure and verify the recipient's name and payment details to avoid sending money to the wrong account."
+      ]
+    },
+    {
+      title: '3. Automatic Account Credit',
+      icon: 'fa-bolt',
+      points: [
+        "After a successful recharge has been received and verified, the corresponding amount will be credited to the user's AEROGROBALSHIPPING account according to the platform's processing system.",
+        'Users should keep their transaction receipt or transaction reference until the recharge has been successfully reflected in their account.'
+      ]
+    },
+    {
+      title: '4. Product Purchase',
+      icon: 'fa-box-open',
+      points: [
+        'A user must purchase an eligible product before becoming eligible to withdraw funds, according to the applicable AEROGROBALSHIPPING conditions.',
+        'Users may purchase any available eligible products they wish, subject to availability.',
+        'Product prices and availability may change when necessary.'
+      ]
+    },
+    {
+      title: '5. Withdrawals',
+      icon: 'fa-money-bill-transfer',
+      points: [
+        'Eligible users may request withdrawals after fulfilling the applicable withdrawal requirements.',
+        "Approved withdrawals are sent to the user's registered MTN MoMo account.",
+        'Withdrawals are normally expected to arrive within approximately 2–15 minutes, subject to transaction processing and network conditions.',
+        'Users are responsible for providing correct Mobile Money details.'
+      ]
+    },
+    {
+      title: '6. Gift Code',
+      icon: 'fa-gift',
+      points: [
+        'AEROGROBALSHIPPING may provide a daily Gift Code at 16:20 PM.',
+        'The Gift Code is distributed through the official AEROGROBALSHIPPING group by the authorized owner/customer service.',
+        'Users must enter the Gift Code exactly as it appears in the official group in the designated section of the AEROGROBALSHIPPING platform.',
+        'Users may earn approximately 70–200 RWF through eligible Gift Code activities, according to the applicable daily conditions.',
+        'Users should not use unofficial, expired, modified, or fraudulent Gift Codes.',
+        'Each Gift Code should be used according to the instructions provided by AEROGROBALSHIPPING.'
+      ]
+    },
+    {
+      title: '7. Daily Check-in',
+      icon: 'fa-calendar-check',
+      points: [
+        'In addition to Gift Code earnings, users may earn through the daily Check-in activity.',
+        'An eligible Check-in may provide 100 RWF per 24-hour period, subject to the applicable program conditions.',
+        'Users should complete Check-in according to the instructions displayed on the platform.',
+        'Check-in rewards are subject to account eligibility and verification.'
+      ]
+    },
+    {
+      title: '8. Referral and Customer Invitation',
+      icon: 'fa-user-group',
+      points: [
+        'Every employee/user is encouraged to invite customers to join and use AEROGROBALSHIPPING.',
+        'Users may earn referral commissions for qualifying invitations.',
+        'The commission for one qualifying invitation is 38%, subject to the applicable referral conditions.',
+        'As users progress through different categories or levels, they may become eligible for the benefits and earnings associated with those levels.',
+        'Referral activities must be genuine. Creating fake accounts, duplicate accounts, or manipulating referrals is prohibited.'
+      ]
+    },
+    {
+      title: '9. Employee Responsibilities',
+      icon: 'fa-briefcase',
+      points: [
+        'Every employee is expected to invite and support customers so that AEROGROBALSHIPPING activities can operate effectively.',
+        'Employees should provide customers with correct information and guide them through the proper procedures.'
+      ]
+    }
+  ];
+
+  app.innerHTML = `
+    <!-- Header / Banner -->
+    <div style="position:relative; width:100%; height:160px; background:#2E6F40; display:flex; align-items:center; justify-content:center;">
+      <div style="position:absolute; inset:0; background:linear-gradient(135deg, rgba(0,0,0,0.25), rgba(0,0,0,0.05));"></div>
+      <div style="position:relative; text-align:center; color:#fff;">
+        <i class="fas fa-scroll" style="font-size:34px; margin-bottom:6px; display:block;"></i>
+        <h1 style="font-size:24px; font-weight:900; letter-spacing:1px; margin:0;">Rules &amp; Regulations</h1>
+        <p style="font-size:12px; opacity:0.9; margin-top:4px;">AEROGROBALSHIPPING</p>
+      </div>
+    </div>
+
+    <div style="padding:16px;">
+
+      <!-- Back button -->
+      <button onclick="window.location.hash='mine'" style="display:flex; align-items:center; gap:6px; background:#fff; border:2px solid #2E6F40; color:#2E6F40; border-radius:30px; padding:8px 16px; font-weight:700; font-size:13px; cursor:pointer; margin-bottom:16px;">
+        <i class="fas fa-arrow-left"></i> Back to Mine
+      </button>
+
+      <!-- Intro card -->
+      <div style="background:#EDF4F0; border-left:4px solid #2E6F40; border-radius:12px; padding:14px; margin-bottom:16px;">
+        <p style="font-size:13px; color:#1F4D2B; line-height:1.6; margin:0;">
+          Please read the following rules and regulations carefully before using the AEROGROBALSHIPPING platform. By using our services, you agree to comply with all terms below.
+        </p>
+      </div>
+
+      <!-- Rules list -->
+      ${rules.map((rule, idx) => `
+        <div style="background:#fff; border-radius:14px; border:2px solid #2E6F40; margin-bottom:14px; overflow:hidden;">
+          <!-- Rule header -->
+          <div style="background:#2E6F40; color:#fff; padding:12px 14px; display:flex; align-items:center; gap:10px;">
+            <div style="width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              <i class="fas ${rule.icon}" style="font-size:15px;"></i>
+            </div>
+            <h2 style="font-size:14px; font-weight:900; margin:0; line-height:1.3;">${rule.title}</h2>
+          </div>
+
+          <!-- Rule points -->
+          <div style="padding:12px 14px;">
+            <ul style="margin:0; padding-left:0; list-style:none;">
+              ${rule.points.map((p, i) => `
+                <li style="display:flex; gap:8px; margin-bottom:${i === rule.points.length - 1 ? '0' : '10px'}; font-size:13px; color:#343434; line-height:1.55;">
+                  <i class="fas fa-check-circle" style="color:#2E6F40; font-size:12px; margin-top:3px; flex-shrink:0;"></i>
+                  <span>${p}</span>
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+        </div>
+      `).join('')}
+
+      <!-- Footer note -->
+      <div style="background:#fff; border-radius:12px; border:2px dashed #2E6F40; padding:14px; margin-bottom:24px; text-align:center;">
+        <i class="fas fa-shield-halved" style="color:#2E6F40; font-size:20px; margin-bottom:6px; display:block;"></i>
+        <p style="font-size:12px; color:#1F4D2B; margin:0; line-height:1.5;">
+          Failure to comply with these rules may result in suspension or termination of your account.
+        </p>
+      </div>
+    </div>
+  `;
+
+  // Scroll to top on load
+  window.scrollTo(0, 0);
 }
