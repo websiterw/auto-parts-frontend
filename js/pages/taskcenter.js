@@ -1,0 +1,5 @@
+const routes = {
+  // ...existing routes...
+  home: renderHome,
+  taskcenter: renderTaskCenter,   // ✅ NEW
+};
