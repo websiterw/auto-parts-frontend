@@ -92,15 +92,26 @@
 
   // ============================================================
   // LOGIN
+  // 🔒 SECURITY FIX: no default values, no autocomplete, cleared after login
   // ============================================================
   function renderLogin() {
     document.getElementById('app').innerHTML = `
       <div class="login-container">
         <h1>Admin Login</h1>
         <div class="card">
-          <div class="input-group"><label>Username</label><input id="admin-user" type="text" value="admin"></div>
-          <div class="input-group"><label>Password</label><input id="admin-pass" type="password" value="admin"></div>
-          <button class="btn" onclick="login()" style="width:100%;">Login</button>
+          <form id="admin-login-form" autocomplete="off" onsubmit="event.preventDefault(); login();">
+            <div class="input-group">
+              <label>Username</label>
+              <input id="admin-user" type="text" placeholder="Enter username"
+                     autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+            </div>
+            <div class="input-group">
+              <label>Password</label>
+              <input id="admin-pass" type="password" placeholder="Enter password"
+                     autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false">
+            </div>
+            <button class="btn" type="submit" style="width:100%;">Login</button>
+          </form>
           <button class="btn btn-outline" onclick="clearStorageAndReload()" style="margin-top:10px; width:100%;">
             <i class="fas fa-undo-alt"></i> Clear Storage & Reload
           </button>
@@ -110,8 +121,16 @@
   }
 
   async function login() {
-    const username = document.getElementById('admin-user').value;
-    const password = document.getElementById('admin-pass').value;
+    const userInput = document.getElementById('admin-user');
+    const passInput = document.getElementById('admin-pass');
+    const username = userInput.value.trim();
+    const password = passInput.value;
+
+    if (!username || !password) {
+      alert('Please enter both username and password.');
+      return;
+    }
+
     try {
       const res = await fetch(`${API_BASE}/managers/login`, {
         method: 'POST',
@@ -119,7 +138,12 @@
         body: JSON.stringify({ username, password })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.msg);
+      if (!res.ok) throw new Error(data.msg || 'Login failed');
+
+      // ✅ Clear sensitive fields immediately
+      userInput.value = '';
+      passInput.value = '';
+
       adminToken = data.token;
       localStorage.setItem('adminToken', adminToken);
       renderApp();
@@ -143,7 +167,7 @@
         <button class="tab-btn" data-tab="transactions">Transactions</button>
         <button class="tab-btn" data-tab="withdrawals">Withdrawals</button>
         <button class="tab-btn" data-tab="recharges">Recharges</button>
-        <button class="tab-btn" data-tab="investments">Investments</button> <!-- NEW -->
+        <button class="tab-btn" data-tab="investments">Investments</button>
         <button class="tab-btn" data-tab="settings">Settings</button>
       </div>
       <div id="tab-content">
@@ -151,7 +175,7 @@
         <div class="tab-pane" id="pane-transactions">Loading transactions...</div>
         <div class="tab-pane" id="pane-withdrawals">Loading withdrawals...</div>
         <div class="tab-pane" id="pane-recharges">Loading recharges...</div>
-        <div class="tab-pane" id="pane-investments">Loading investments...</div> <!-- NEW -->
+        <div class="tab-pane" id="pane-investments">Loading investments...</div>
         <div class="tab-pane" id="pane-settings">Loading settings...</div>
       </div>
     `;
@@ -313,7 +337,7 @@ async function deleteAllUsers() {
   }
 }
   // ============================================================
-  // TRANSACTIONS TAB (unchanged)
+  // TRANSACTIONS TAB
   // ============================================================
   async function loadTransactions() {
     const container = document.getElementById('pane-transactions');
@@ -374,7 +398,7 @@ async function deleteAllUsers() {
   }
 
   // ============================================================
-  // WITHDRAWALS TAB (unchanged)
+  // WITHDRAWALS TAB
   // ============================================================
   async function loadWithdrawals() {
     const container = document.getElementById('pane-withdrawals');
@@ -461,7 +485,7 @@ async function deleteAllUsers() {
   }
 
   // ============================================================
-  // RECHARGES TAB (unchanged)
+  // RECHARGES TAB
   // ============================================================
   async function loadRecharges() {
     const container = document.getElementById('pane-recharges');
@@ -547,7 +571,7 @@ async function deleteAllUsers() {
   }
 
 // ============================================================
-// INVESTMENTS TAB – with Edit, +Income, Delete, and Delete All
+// INVESTMENTS TAB
 // ============================================================
 let allInvestments = [];
 
@@ -717,8 +741,7 @@ async function deleteAllInvestments() {
   }
 }
   // ============================================================
-// ============================================================
-// SETTINGS TAB – full with load & render
+// SETTINGS TAB
 // ============================================================
 async function loadSettings() {
   const container = document.getElementById('pane-settings');
@@ -822,7 +845,7 @@ function renderSettings(settings, giftCodes, container) {
   `;
 }
 
-// -------- Settings actions (already present, but keep them) --------
+// -------- Settings actions --------
 async function saveSettings() {
   const payload = {
     mtnAccount: document.getElementById('mtn-account').value,
