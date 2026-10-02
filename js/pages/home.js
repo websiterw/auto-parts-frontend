@@ -238,7 +238,12 @@ function showGreenBasketPopup() {
       <button id="popup-telegram" style="flex: 1; padding: 12px; border: none; border-radius: 30px; background: #2E6F40; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer;">
         Telegram <i class="fas fa-chevron-right" style="font-size: 12px; margin-left: 4px;"></i>
       </button>
-      <button id="popup-ok" style="flex: 1; padding: 12px; border: 2px solid #2E6F40; border-radius: 30px; background: transparent; color: #2E6F40; font-weight: 700; font-size: 15px; cursor: pointer;">
+      <button id="popup-rules" style="flex: 1; padding: 12px; border: none; border-radius: 30px; background: #2E6F40; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer;">
+        Rules <i class="fas fa-chevron-right" style="font-size: 12px; margin-left: 4px;"></i>
+      </button>
+    </div>
+    <div style="margin-top: 10px;">
+      <button id="popup-ok" style="width: 100%; padding: 12px; border: 2px solid #2E6F40; border-radius: 30px; background: transparent; color: #2E6F40; font-weight: 700; font-size: 15px; cursor: pointer;">
         OK
       </button>
     </div>
@@ -279,5 +284,11 @@ function showGreenBasketPopup() {
   // Telegram button → open Telegram (doesn't close popup)
   document.getElementById('popup-telegram').addEventListener('click', () => {
     window.open('https://t.me/your_telegram_bot', '_blank');
+  });
+
+  // ✅ Rules button → close popup & navigate to Rules page
+  document.getElementById('popup-rules').addEventListener('click', () => {
+    closePopup();
+    window.location.hash = 'rules';
   });
 }
