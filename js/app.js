@@ -17,6 +17,7 @@ import { renderWithdraw } from './pages/withdraw.js';
 import { renderRecords } from './pages/records.js';
 import { renderCustomerService } from './pages/customerService.js';
 import { renderRules } from './pages/mine.js';   // ✅ ADD THIS (if rules is in mine.js)
+import { renderTaskCenter } from './pages/home.js';   // ✅ NEW
 
 window.api = api;
 window.toastError = toastError;
