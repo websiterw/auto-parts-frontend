@@ -71,7 +71,7 @@ export async function renderRecharge() {
         <div style="position:fixed; inset:0; z-index:50; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; padding:0 20px;">
           <div style="background:#fff; border-radius:20px; padding:24px; width:100%; max-width:400px; position:relative;">
             <button onclick="step=1; render()" style="position:absolute; top:12px; right:16px; background:none; border:none; font-size:24px; color:#999; cursor:pointer;">&times;</button>
-            <p style="text-align:center; font-weight:900; color:${GOLD}; font-size:14px; letter-spacing:2px;">◎ GREEN BASKET PAY</p>
+            <p style="text-align:center; font-weight:900; color:${GOLD}; font-size:14px; letter-spacing:2px;">◎AEROGROBALSHIPPING PAY</p>
             <p style="font-size:14px; color:#343434; margin-top:8px;">Payment Amount: <span style="font-weight:bold; color:${GOLD};">RWF ${amount}</span></p>
             <p style="font-size:12px; color:#6b6b6b; margin-top:12px;">Please select your payment method</p>
             <div style="display:flex; gap:10px; margin-top:6px;">
