@@ -39,6 +39,7 @@ const routes = {
   records: renderRecords,
   customerService: renderCustomerService,
   rules: renderRules,   // ✅ ADD THIS LINE
+  task: renderTask,
 };
 
 // ============================================================
